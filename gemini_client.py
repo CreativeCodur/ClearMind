@@ -11,6 +11,18 @@ from typing import Optional, List, Dict
 
 import config
 
+GARBAGE_PATTERNS = [
+    "user safety:", "safety:", "content policy", "i cannot",
+    "as an ai language model", "classification:",
+]
+
+
+def _is_garbage(text: str) -> bool:
+    stripped = text.strip().lower()
+    if len(stripped.split()) < 4:
+        return True
+    return any(stripped.startswith(p) for p in GARBAGE_PATTERNS)
+
 
 class GeminiClient:
     """OpenRouter API wrapper for ClearMind (keeps class name for compatibility)."""
@@ -27,6 +39,7 @@ class GeminiClient:
             )
 
         self.model = config.MODEL
+        self.fallback_models = getattr(config, "FALLBACK_MODELS", [])
         self.api_url = config.API_URL
 
     def _load_from_dotenv(self) -> Optional[str]:
@@ -39,28 +52,10 @@ class GeminiClient:
                         return line.split('=', 1)[1].strip().strip('"').strip("'")
         return None
 
-    def generate(
-        self,
-        user_message: str,
-        system_prompt: str = "",
-        conversation_history: Optional[List[Dict]] = None,
-        temperature: float = config.TEMPERATURE,
-        max_tokens: int = config.MAX_TOKENS,
-    ) -> str:
-        messages = []
-
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-
-        if conversation_history:
-            for msg in conversation_history:
-                role = "assistant" if msg["role"] == "model" else "user"
-                messages.append({"role": role, "content": msg["text"]})
-
-        messages.append({"role": "user", "content": user_message})
-
+    def _call_api(self, messages: list, model: str,
+                  temperature: float, max_tokens: int) -> str:
         body = {
-            "model": self.model,
+            "model": model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -97,6 +92,42 @@ class GeminiClient:
                 f"Unexpected response format: {e}\n"
                 f"Response: {json.dumps(data, indent=2)[:500]}"
             )
+
+    def generate(
+        self,
+        user_message: str,
+        system_prompt: str = "",
+        conversation_history: Optional[List[Dict]] = None,
+        temperature: float = config.TEMPERATURE,
+        max_tokens: int = config.MAX_TOKENS,
+    ) -> str:
+        messages = []
+
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        if conversation_history:
+            for msg in conversation_history:
+                role = "assistant" if msg["role"] == "model" else "user"
+                messages.append({"role": role, "content": msg["text"]})
+
+        messages.append({"role": "user", "content": user_message})
+
+        models_to_try = [self.model] + self.fallback_models
+        last_error = None
+
+        for model in models_to_try:
+            try:
+                content = self._call_api(messages, model, temperature, max_tokens)
+                if not _is_garbage(content):
+                    return content
+            except RuntimeError as e:
+                last_error = e
+                continue
+
+        if last_error:
+            raise last_error
+        raise RuntimeError("All models returned unusable responses")
 
     def simplify(self, text: str, simplify_prompt: str) -> str:
         return self.generate(

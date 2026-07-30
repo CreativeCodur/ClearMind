@@ -10,7 +10,12 @@ Design rationale:
 """
 
 # ─── API ────────────────────────────────────────────────────────────────────────
-MODEL = "openrouter/free"
+MODEL = "google/gemini-2.0-flash-exp:free"
+FALLBACK_MODELS = [
+    "google/gemma-3-27b-it:free",
+    "mistralai/mistral-small-3.1-24b-instruct:free",
+    "openrouter/free",
+]
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MAX_TOKENS = 4096
 TEMPERATURE = 0.7
