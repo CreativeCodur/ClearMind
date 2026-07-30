@@ -32,7 +32,9 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 
 import config
+import spacy
 
+nlp = spacy.load("en_core_web_sm")
 
 # ─── Syllable counter ───────────────────────────────────────────────────────────
 
@@ -87,11 +89,10 @@ def count_syllables(word: str) -> int:
 
 def split_sentences(text: str) -> List[str]:
     """Split text into sentences. Handles abbreviations and decimals."""
-    # Split on sentence-ending punctuation followed by whitespace or end
-    raw = re.split(r'(?<=[.!?])\s+', text.strip())
-    # Filter empty strings
-    return [s.strip() for s in raw if s.strip()]
+    # Use the spacy nlp to split the text into sentences
+    doc = nlp(text)
 
+    return [sent.text for sent in doc.sents]
 
 def get_words(text: str) -> List[str]:
     """Extract words from text (alpha characters only)."""

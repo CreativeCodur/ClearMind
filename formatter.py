@@ -46,7 +46,9 @@ def format_response(text: str, mode: str) -> str:
         # Generate a TL;DR from the first sentence
         sentences = split_sentences(body)
         if sentences:
-            tldr = sentences[0]
+            first_sentence = sentences[0]
+            tldr = first_sentence.strip()
+            body = body[len(first_sentence):].strip()
 
     # Step 2: Chunk the body
     chunk_size = config.CHUNK_SIZES.get(mode, 10)
