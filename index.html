@@ -148,15 +148,85 @@
         }
 
         /* Layout */
-        .app {
+        .workspace {
             position: relative;
             z-index: 2;
             display: flex;
-            flex-direction: column;
             height: 100%;
-            max-width: 860px;
+            max-width: 1120px;
             width: 100%;
             margin: 0 auto;
+            gap: 20px;
+            padding: 16px;
+        }
+
+        .app {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            height: 100%;
+            min-width: 0;
+            max-width: 860px;
+        }
+
+        /* Session prompt history */
+        .history-panel {
+            width: 224px;
+            flex-shrink: 0;
+            align-self: stretch;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 14px;
+            border: 1px solid var(--ai-bubble-border);
+            border-radius: var(--radius);
+            background: rgba(255, 255, 255, 0.78);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .history-title {
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .history-help {
+            color: var(--text-secondary);
+            font-size: 0.72rem;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .prompt-history {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .prompt-history-empty {
+            color: var(--text-secondary);
+            font-size: 0.76rem;
+            line-height: 1.45;
+            padding: 10px 4px;
+        }
+
+        .prompt-history-item {
+            width: 100%;
+            border: 0;
+            border-left: 3px solid var(--accent-light);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            background: var(--accent-faint);
+            color: var(--text);
+            cursor: default;
+            font: inherit;
+            font-size: 0.76rem;
+            line-height: 1.4;
+            padding: 8px 9px;
+            text-align: left;
+            overflow-wrap: anywhere;
         }
 
         /* Header */
@@ -576,6 +646,15 @@
 
         /* ─── Responsive ─── */
         @media (max-width: 768px) {
+            .workspace {
+                display: block;
+                padding: 0;
+            }
+
+            .history-panel {
+                display: none;
+            }
+
             .header {
                 padding: 12px 16px 10px;
                 flex-wrap: wrap;
@@ -666,7 +745,16 @@
     <!-- Tinted reading overlay for dyslexia modes -->
     <div class="reading-overlay" aria-hidden="true"></div>
 
-    <div class="app">
+    <div class="workspace">
+        <aside class="history-panel" aria-label="Current session prompt history">
+            <h2 class="history-title">This session</h2>
+            <p class="history-help">Your prompt topics appear here.</p>
+            <div class="prompt-history" id="promptHistory">
+                <p class="prompt-history-empty" id="promptHistoryEmpty">No prompts yet.</p>
+            </div>
+        </aside>
+
+        <div class="app">
         <!-- Header -->
         <div class="header">
             <div class="logo">
@@ -720,6 +808,7 @@
             </div>
         </div>
     </div>
+    </div>
 
     <script>
         let currentMode = 'combined';
@@ -733,6 +822,8 @@
         const readabilityDot = document.getElementById('readabilityDot');
         const readabilityText = document.getElementById('readabilityText');
         const newChatBtn = document.getElementById('newChatBtn');
+        const promptHistory = document.getElementById('promptHistory');
+        const promptHistoryEmpty = document.getElementById('promptHistoryEmpty');
 
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -764,6 +855,7 @@
             }
 
             readabilityBadge.classList.remove('visible');
+            clearPromptHistory();
         });
 
         // Auto-resize textarea
@@ -780,6 +872,7 @@
             if (welcome) welcome.style.display = 'none';
 
             addMessage(message, 'user');
+            addPromptToHistory(message);
             userInput.value = '';
             userInput.style.height = 'auto';
 
@@ -830,6 +923,19 @@
             div.innerHTML = html;
             chatContainer.insertBefore(div, loading);
             scrollToBottom();
+        }
+
+        function addPromptToHistory(prompt) {
+            promptHistoryEmpty.remove();
+            const item = document.createElement('div');
+            item.className = 'prompt-history-item';
+            item.textContent = prompt;
+            item.title = prompt;
+            promptHistory.appendChild(item);
+        }
+
+        function clearPromptHistory() {
+            promptHistory.replaceChildren(promptHistoryEmpty);
         }
 
         function updateReadabilityBadge(info) {
