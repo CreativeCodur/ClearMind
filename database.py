@@ -2,6 +2,8 @@
 
 import re
 import sqlite3
+import os
+import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
@@ -9,7 +11,16 @@ from typing import Optional
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
-DATABASE_PATH = Path(__file__).with_name("clearmind.db")
+# Vercel mounts the deployed application as read-only. Its temporary directory
+# is writable for a single function instance, while local development keeps the
+# database next to the source file. A custom path can be supplied for another
+# persistent host or database volume.
+_default_database_path = (
+    Path(tempfile.gettempdir()) / "clearmind.db"
+    if os.environ.get("VERCEL")
+    else Path(__file__).with_name("clearmind.db")
+)
+DATABASE_PATH = Path(os.environ.get("CLEARMIND_DATABASE_PATH", _default_database_path))
 EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
