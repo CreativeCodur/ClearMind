@@ -360,6 +360,51 @@
             display: flex;
         }
 
+        .readability-metric {
+            position: relative;
+            cursor: help;
+            white-space: nowrap;
+            text-decoration: underline dotted rgba(95, 111, 101, 0.55);
+            text-underline-offset: 3px;
+        }
+
+        .readability-tooltip {
+            position: absolute;
+            z-index: 10;
+            top: calc(100% + 10px);
+            left: 50%;
+            width: max-content;
+            max-width: 220px;
+            padding: 8px 10px;
+            border: 1px solid rgba(95, 111, 101, 0.16);
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: var(--shadow-sm);
+            color: var(--text);
+            font-size: 0.72rem;
+            font-weight: 400;
+            line-height: 1.4;
+            white-space: normal;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translate(-50%, -3px);
+            transition: opacity var(--transition), transform var(--transition), visibility var(--transition);
+        }
+
+        .readability-metric:hover .readability-tooltip,
+        .readability-metric:focus-visible .readability-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+
+        .readability-metric:focus-visible {
+            border-radius: 3px;
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
+
         .readability-dot {
             width: 7px;
             height: 7px;
@@ -816,7 +861,20 @@
 
             <div class="readability-badge" id="readabilityBadge">
                 <span class="readability-dot" id="readabilityDot"></span>
-                <span id="readabilityText"></span>
+                <span class="readability-metric" tabindex="0" aria-describedby="gradeTooltip">
+                    Grade <span id="readabilityGrade"></span>
+                    <span class="readability-tooltip" id="gradeTooltip" role="tooltip">
+                        Flesch–Kincaid Grade Level estimates the U.S. school grade needed to understand the text. Lower scores mean easier text.
+                    </span>
+                </span>
+                <span aria-hidden="true">·</span>
+                <span class="readability-metric" tabindex="0" aria-describedby="easeTooltip">
+                    Ease <span id="readabilityEase"></span>
+                    <span class="readability-tooltip" id="easeTooltip" role="tooltip">
+                        Flesch Reading Ease scores text from 0 to 100. Higher scores mean easier text.
+                    </span>
+                </span>
+                <span id="readabilityPasses"></span>
             </div>
 
             <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
@@ -903,7 +961,9 @@
         const welcome = document.getElementById('welcome');
         const readabilityBadge = document.getElementById('readabilityBadge');
         const readabilityDot = document.getElementById('readabilityDot');
-        const readabilityText = document.getElementById('readabilityText');
+        const readabilityGrade = document.getElementById('readabilityGrade');
+        const readabilityEase = document.getElementById('readabilityEase');
+        const readabilityPasses = document.getElementById('readabilityPasses');
         const newChatBtn = document.getElementById('newChatBtn');
         const promptHistory = document.getElementById('promptHistory');
         const promptHistoryEmpty = document.getElementById('promptHistoryEmpty');
@@ -1128,9 +1188,10 @@
             if (!info) return;
             readabilityBadge.classList.add('visible');
             readabilityDot.className = 'readability-dot ' + (info.passes ? 'pass' : 'fail');
-            readabilityText.textContent =
-                'Grade ' + info.fk_grade + ' · Ease ' + info.reading_ease +
-                (info.simplification_passes > 0 ? ' (' + info.simplification_passes + ' pass)' : '');
+            readabilityGrade.textContent = info.fk_grade;
+            readabilityEase.textContent = info.reading_ease;
+            readabilityPasses.textContent =
+                info.simplification_passes > 0 ? ' (' + info.simplification_passes + ' pass)' : '';
         }
 
         function scrollToBottom() {
