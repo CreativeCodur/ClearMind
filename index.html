@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClearMind</title>
+
+    <style>
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/static/fonts/OpenDyslexic-Regular.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/static/fonts/OpenDyslexic-Italic.otf') format('opentype');
+            font-weight: 400;
+            font-style: italic;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/static/fonts/OpenDyslexic-Bold.otf') format('opentype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('/static/fonts/OpenDyslexic-BoldItalic.otf') format('opentype');
+            font-weight: 700;
+            font-style: italic;
+            font-display: swap;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f7f5f0;
+            --bg-secondary: #efece6;
+            --bg-chat: #faf9f6;
+            --text: #2d2d2d;
+            --text-secondary: #6b6b6b;
+            --accent: #5b8a72;
+            --accent-light: #7aac95;
+            --accent-faint: rgba(91, 138, 114, 0.08);
+            --user-bubble: #e8f0ec;
+            --user-bubble-border: #c8ddd1;
+            --ai-bubble: #ffffff;
+            --ai-bubble-border: #e5e2dc;
+            --tldr-bg: #eef6f1;
+            --tldr-border: #5b8a72;
+            --drift-bg: #fef9ef;
+            --drift-border: #c9a84c;
+            --chunk-border: rgba(0, 0, 0, 0.04);
+            --input-bg: #ffffff;
+            --input-border: #ddd9d2;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            --transition: 180ms ease;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Gentle geometric background */
+        .bg-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .bg-pattern svg {
+            position: absolute;
+            opacity: 0.3;
+        }
+
+        .bg-shape-1 {
+            top: -60px;
+            right: -40px;
+            width: 320px;
+            height: 320px;
+            animation: float-slow 20s ease-in-out infinite;
+        }
+
+        .bg-shape-2 {
+            bottom: -80px;
+            left: -60px;
+            width: 280px;
+            height: 280px;
+            animation: float-slow 25s ease-in-out infinite reverse;
+        }
+
+        .bg-shape-3 {
+            top: 40%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            animation: float-slow 18s ease-in-out infinite 3s;
+        }
+
+        @keyframes float-slow {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(12px, -18px) rotate(3deg); }
+            50% { transform: translate(-8px, 14px) rotate(-2deg); }
+            75% { transform: translate(16px, 8px) rotate(4deg); }
+        }
+
+        /* Tinted overlay for dyslexia modes */
+        .reading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        body.mode-dyslexia .reading-overlay,
+        body.mode-combined .reading-overlay {
+            background: rgba(255, 248, 220, 0.12);
+            opacity: 1;
+        }
+
+        /* Layout */
+        .app {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 860px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            padding: 16px 24px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            gap: 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: baseline;
+            gap: 2px;
+        }
+
+        .logo-clear {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+        }
+
+        .logo-mind {
+            font-size: 1.25rem;
+            font-weight: 300;
+            color: var(--text);
+            letter-spacing: -0.02em;
+        }
+
+        /* Mode pills */
+        .mode-selector {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-secondary);
+            padding: 3px;
+            border-radius: 12px;
+        }
+
+        .mode-btn {
+            padding: 7px 18px;
+            border: none;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .mode-btn:hover {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .mode-btn.active {
+            background: #fff;
+            color: var(--text);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Readability badge */
+        .readability-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            padding: 5px 10px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+        }
+
+        .readability-badge.visible {
+            display: flex;
+        }
+
+        .readability-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .readability-dot.pass { background: var(--accent); }
+        .readability-dot.fail { background: #c47a5a; }
+
+        /* Chat area */
+        .chat-container {
+            flex: 1;
+            overflow-y: scroll;
+            padding: 8px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Welcome state */
+        .welcome {
+            margin: auto;
+            text-align: center;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        .welcome-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            border-radius: 16px;
+            background: var(--accent-faint);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .welcome p {
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        /* Messages */
+        .message {
+            max-width: 680px;
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            line-height: 1.65;
+            font-size: 0.92rem;
+            animation: msgIn 0.25s ease-out;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: var(--user-bubble);
+            border: 1px solid var(--user-bubble-border);
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+            color: var(--text);
+        }
+
+        .message.ai {
+            background: var(--ai-bubble);
+            border: 1px solid var(--ai-bubble-border);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* AI response inner formatting */
+        .message.ai p {
+            margin-bottom: 0.6em;
+        }
+
+        .message.ai p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message.ai ul, .message.ai ol {
+            padding-left: 1.4em;
+            margin-bottom: 0.6em;
+        }
+
+        .message.ai li {
+            margin-bottom: 0.25em;
+        }
+
+        .message.ai strong {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .message.ai h1, .message.ai h2, .message.ai h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0.8em 0 0.3em;
+            color: var(--text);
+        }
+
+        .message.ai h1:first-child, .message.ai h2:first-child, .message.ai h3:first-child {
+            margin-top: 0;
+        }
+
+        /* TL;DR block */
+        .clearmind-tldr {
+            background: var(--tldr-bg);
+            border-left: 3px solid var(--tldr-border);
+            padding: 10px 14px;
+            border-radius: 4px 8px 8px 4px;
+            margin-bottom: 14px;
+            font-size: 0.9rem;
+        }
+
+        .clearmind-tldr strong {
+            color: var(--tldr-border);
+            font-weight: 600;
+        }
+
+        .clearmind-tldr p {
+            display: inline;
+            margin: 0;
+        }
+
+        /* Chunks */
+        .clearmind-chunk {
+            padding: 4px 0;
+            border-bottom: 1px solid var(--chunk-border);
+            margin-bottom: 8px;
+        }
+
+        .clearmind-chunk:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        /* Drift notice */
+        .clearmind-drift-notice {
+            background: var(--drift-bg);
+            border-left: 3px solid var(--drift-border);
+            padding: 10px 14px;
+            border-radius: 4px 8px 8px 4px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+            color: #7a6c3d;
+            font-style: italic;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            align-self: flex-start;
+            padding: 16px 20px;
+            background: var(--ai-bubble);
+            border: 1px solid var(--ai-bubble-border);
+            border-radius: var(--radius);
+            border-bottom-left-radius: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .loading.visible { display: block; }
+
+        .loading-dots span {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            margin: 0 3px;
+            animation: pulse 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes pulse {
+            0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Input area */
+        .input-area {
+            flex-shrink: 0;
+            padding: 12px 24px 20px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius);
+            padding: 6px 6px 6px 16px;
+            box-shadow: var(--shadow-md);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .input-row:focus-within {
+            border-color: var(--accent-light);
+            box-shadow: 0 2px 12px rgba(91, 138, 114, 0.1);
+        }
+
+        .input-area textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 0;
+            color: var(--text);
+            font-size: 0.92rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 24px;
+            max-height: 120px;
+            outline: none;
+            line-height: 1.5;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .input-area textarea::-webkit-scrollbar {
+            display: none;
+        }
+
+        .input-area textarea::placeholder {
+            color: #b0ada6;
+        }
+
+        .send-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background var(--transition), transform 0.1s;
+        }
+
+        .send-btn:hover { background: var(--accent-light); }
+        .send-btn:active { transform: scale(0.95); }
+        .send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #fff;
+        }
+
+        /* New conversation button */
+        .new-chat-btn {
+            background: none;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-family: inherit;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+
+        .new-chat-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ─── Mode-specific overrides ─── */
+
+        /* Dyslexia & Combined: OpenDyslexic, spacing, larger text */
+        body.mode-dyslexia,
+        body.mode-combined {
+            font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif;
+            letter-spacing: 0.12em;
+            word-spacing: 0.2em;
+        }
+
+        body.mode-dyslexia *,
+        body.mode-combined * {
+            font-family: inherit;
+        }
+
+        body.mode-dyslexia .message,
+        body.mode-combined .message {
+            font-size: 1.05rem;
+            line-height: 2.0;
+            max-width: 58ch;
+        }
+
+        body.mode-dyslexia .input-area textarea,
+        body.mode-combined .input-area textarea {
+            font-size: 1.05rem;
+            letter-spacing: 0.12em;
+        }
+
+        /* ADHD mode */
+        body.mode-adhd .message.ai {
+            font-size: 0.94rem;
+            line-height: 1.7;
+            letter-spacing: 0.02em;
+            max-width: 65ch;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px 10px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .mode-selector {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .mode-btn {
+                padding: 7px 14px;
+                font-size: 0.78rem;
+            }
+
+            .chat-container {
+                padding: 8px 16px 16px;
+            }
+
+            .input-area {
+                padding: 10px 16px 16px;
+            }
+
+            .message {
+                max-width: 100%;
+            }
+
+            .new-chat-btn {
+                order: 2;
+            }
+
+            .readability-badge {
+                display: none !important;
+            }
+
+            .bg-shape-1, .bg-shape-2, .bg-shape-3 {
+                opacity: 0.15;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mode-btn {
+                padding: 6px 10px;
+                font-size: 0.74rem;
+            }
+
+            .header {
+                padding: 10px 12px 8px;
+            }
+
+            .chat-container {
+                padding: 6px 12px 12px;
+                gap: 12px;
+            }
+
+            .input-area {
+                padding: 8px 12px 12px;
+            }
+
+            .message {
+                padding: 12px 14px;
+                font-size: 0.88rem;
+            }
+        }
+    </style>
+</head>
+<body class="mode-combined">
+
+    <!-- Soft geometric background -->
+    <div class="bg-pattern" aria-hidden="true">
+        <svg class="bg-shape-1" viewBox="0 0 320 320" fill="none">
+            <circle cx="160" cy="160" r="140" stroke="#5b8a72" stroke-width="0.5" fill="none" opacity="0.4"/>
+            <circle cx="160" cy="160" r="100" stroke="#7aac95" stroke-width="0.5" fill="none" opacity="0.3"/>
+            <circle cx="160" cy="160" r="60" stroke="#5b8a72" stroke-width="0.5" fill="none" opacity="0.2"/>
+        </svg>
+        <svg class="bg-shape-2" viewBox="0 0 280 280" fill="none">
+            <rect x="40" y="40" width="200" height="200" rx="40" stroke="#8faabe" stroke-width="0.5" fill="none" opacity="0.3"/>
+            <rect x="70" y="70" width="140" height="140" rx="30" stroke="#8faabe" stroke-width="0.5" fill="none" opacity="0.2"/>
+        </svg>
+        <svg class="bg-shape-3" viewBox="0 0 200 200" fill="none">
+            <polygon points="100,20 180,80 155,170 45,170 20,80" stroke="#b8a9c9" stroke-width="0.5" fill="none" opacity="0.25"/>
+            <polygon points="100,50 155,90 140,150 60,150 45,90" stroke="#b8a9c9" stroke-width="0.5" fill="none" opacity="0.15"/>
+        </svg>
+    </div>
+
+    <!-- Tinted reading overlay for dyslexia modes -->
+    <div class="reading-overlay" aria-hidden="true"></div>
+
+    <div class="app">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-clear">Clear</span><span class="logo-mind">Mind</span>
+            </div>
+
+            <div class="mode-selector">
+                <button class="mode-btn" data-mode="dyslexia">Dyslexia</button>
+                <button class="mode-btn" data-mode="adhd">ADHD</button>
+                <button class="mode-btn active" data-mode="combined">Combined</button>
+            </div>
+
+            <div class="readability-badge" id="readabilityBadge">
+                <span class="readability-dot" id="readabilityDot"></span>
+                <span id="readabilityText"></span>
+            </div>
+
+            <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
+        </div>
+
+        <!-- Chat -->
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome" id="welcome">
+                <div class="welcome-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5b8a72" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a7 7 0 0 1 7 7c0 3-1.5 5-3 6.5V18a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2.5C6.5 14 5 12 5 9a7 7 0 0 1 7-7z"/>
+                        <line x1="10" y1="22" x2="14" y2="22"/>
+                    </svg>
+                </div>
+                <h2>Welcome to ClearMind</h2>
+                <p>An AI chat that adapts to how you think. Pick your mode above and start a conversation.</p>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="input-area">
+            <div class="input-row">
+                <textarea
+                    id="userInput"
+                    placeholder="Ask anything..."
+                    rows="1"
+                    aria-label="Message input"
+                ></textarea>
+                <button class="send-btn" id="sendBtn" aria-label="Send message">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'combined';
+        let sessionId = 'session-' + Date.now();
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const loading = document.getElementById('loading');
+        const welcome = document.getElementById('welcome');
+        const readabilityBadge = document.getElementById('readabilityBadge');
+        const readabilityDot = document.getElementById('readabilityDot');
+        const readabilityText = document.getElementById('readabilityText');
+        const newChatBtn = document.getElementById('newChatBtn');
+
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                document.body.className = 'mode-' + currentMode;
+            });
+        });
+
+        // New chat
+        newChatBtn.addEventListener('click', async () => {
+            try {
+                await fetch('/api/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId }),
+                });
+            } catch (e) {}
+
+            sessionId = 'session-' + Date.now();
+
+            const messages = chatContainer.querySelectorAll('.message');
+            messages.forEach(m => m.remove());
+
+            if (welcome) {
+                welcome.style.display = '';
+            }
+
+            readabilityBadge.classList.remove('visible');
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', () => {
+            userInput.style.height = 'auto';
+            userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+        });
+
+        // Send message
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            if (welcome) welcome.style.display = 'none';
+
+            addMessage(message, 'user');
+            userInput.value = '';
+            userInput.style.height = 'auto';
+
+            loading.classList.add('visible');
+            sendBtn.disabled = true;
+            scrollToBottom();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        mode: currentMode,
+                        session_id: sessionId,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    addMessage('Error: ' + data.error, 'ai');
+                } else {
+                    addMessageHTML(data.html, 'ai');
+                    updateReadabilityBadge(data.readability);
+                }
+            } catch (err) {
+                addMessage('Could not reach the server. Is it running?', 'ai');
+            } finally {
+                loading.classList.remove('visible');
+                sendBtn.disabled = false;
+                scrollToBottom();
+                userInput.focus();
+            }
+        }
+
+        function addMessage(text, role) {
+            const div = document.createElement('div');
+            div.className = 'message ' + role;
+            div.textContent = text;
+            chatContainer.insertBefore(div, loading);
+            scrollToBottom();
+        }
+
+        function addMessageHTML(html, role) {
+            const div = document.createElement('div');
+            div.className = 'message ' + role;
+            div.innerHTML = html;
+            chatContainer.insertBefore(div, loading);
+            scrollToBottom();
+        }
+
+        function updateReadabilityBadge(info) {
+            if (!info) return;
+            readabilityBadge.classList.add('visible');
+            readabilityDot.className = 'readability-dot ' + (info.passes ? 'pass' : 'fail');
+            readabilityText.textContent =
+                'Grade ' + info.fk_grade + ' · Ease ' + info.reading_ease +
+                (info.simplification_passes > 0 ? ' (' + info.simplification_passes + ' pass)' : '');
+        }
+
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
