@@ -21,7 +21,7 @@ MAX_TOKENS = 4096
 TEMPERATURE = 0.7
 
 # ─── Modes ──────────────────────────────────────────────────────────────────────
-MODES = ["dyslexia", "adhd", "combined"]
+MODES = ["standard", "dyslexia", "adhd", "combined"]
 DEFAULT_MODE = "combined"
 
 # ─── Readability targets ────────────────────────────────────────────────────────

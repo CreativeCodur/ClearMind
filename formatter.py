@@ -17,6 +17,7 @@ Research basis:
 """
 
 import re
+import html
 from typing import List, Optional
 
 import config
@@ -171,9 +172,9 @@ def strip_format_markers(text: str) -> str:
 
 
 def convert_markdown(text: str) -> str:
-    """Convert markdown source into HTML."""
+    """Convert Markdown to safe HTML without allowing raw HTML from a model."""
     return markdown.markdown(
-        text,
+        html.escape(text),
         extensions=['extra', 'sane_lists', 'nl2br'],
         output_format='html5',
     )
@@ -219,6 +220,6 @@ def to_html(formatted_text: str, mode: str) -> str:
 
     # If no markers found, return as plain paragraph
     if not html_parts:
-        return f'<div class="clearmind-chunk">{formatted_text}</div>'
+        return f'<div class="clearmind-chunk">{html.escape(formatted_text)}</div>'
 
     return '\n'.join(html_parts)

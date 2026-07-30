@@ -229,6 +229,50 @@
             overflow-wrap: anywhere;
         }
 
+        .account-btn {
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            flex-shrink: 0;
+            font: inherit;
+            font-size: 0.75rem;
+            padding: 6px 12px;
+        }
+
+        .account-btn:hover { background: var(--accent-light); }
+
+        .auth-dialog {
+            border: 0;
+            border-radius: var(--radius);
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.2);
+            color: var(--text);
+            margin: auto;
+            max-width: 420px;
+            padding: 0;
+            width: calc(100% - 32px);
+        }
+
+        .auth-dialog::backdrop { background: rgba(31, 42, 35, 0.45); }
+
+        .auth-content { padding: 24px; }
+        .auth-top { align-items: start; display: flex; justify-content: space-between; gap: 16px; }
+        .auth-top h2 { font-size: 1.15rem; }
+        .auth-top p { color: var(--text-secondary); font-size: 0.82rem; line-height: 1.45; margin-top: 5px; }
+        .dialog-close { background: transparent; border: 0; color: var(--text-secondary); cursor: pointer; font-size: 1.35rem; line-height: 1; }
+        .auth-tabs { display: flex; gap: 8px; margin: 20px 0 14px; }
+        .auth-tab { background: var(--bg-secondary); border: 0; border-radius: 8px; color: var(--text-secondary); cursor: pointer; font: inherit; font-size: 0.82rem; padding: 8px 12px; }
+        .auth-tab.active { background: var(--accent-faint); color: var(--accent); font-weight: 700; }
+        .auth-form { display: grid; gap: 12px; }
+        .auth-form[hidden] { display: none; }
+        .auth-form label { color: var(--text-secondary); display: grid; font-size: 0.77rem; gap: 5px; }
+        .auth-form input { border: 1px solid var(--input-border); border-radius: 8px; color: var(--text); font: inherit; padding: 9px 10px; }
+        .auth-submit, .signout-btn { background: var(--accent); border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; margin-top: 4px; padding: 10px; }
+        .auth-error { color: #a54f38; font-size: 0.78rem; min-height: 1.2em; }
+        .account-details { color: var(--text-secondary); font-size: 0.83rem; line-height: 1.6; margin: 18px 0; }
+        .signed-in-only[hidden] { display: none; }
+
         /* Header */
         .header {
             padding: 16px 24px 12px;
@@ -688,6 +732,8 @@
                 order: 2;
             }
 
+            .account-btn { order: 1; }
+
             .readability-badge {
                 display: none !important;
             }
@@ -747,8 +793,8 @@
 
     <div class="workspace">
         <aside class="history-panel" aria-label="Current session prompt history">
-            <h2 class="history-title">This session</h2>
-            <p class="history-help">Your prompt topics appear here.</p>
+            <h2 class="history-title" id="historyTitle">This session</h2>
+            <p class="history-help" id="historyHelp">Your prompt topics appear here.</p>
             <div class="prompt-history" id="promptHistory">
                 <p class="prompt-history-empty" id="promptHistoryEmpty">No prompts yet.</p>
             </div>
@@ -774,6 +820,7 @@
             </div>
 
             <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
+            <button class="account-btn" id="accountBtn" type="button">Sign in</button>
         </div>
 
         <!-- Chat -->
@@ -810,6 +857,42 @@
     </div>
     </div>
 
+    <dialog class="auth-dialog" id="authDialog" aria-labelledby="authTitle">
+        <div class="auth-content">
+            <div class="auth-top">
+                <div>
+                    <h2 id="authTitle">Save your prompt history</h2>
+                    <p id="authSubtitle">Sign in to keep prompts across sessions.</p>
+                </div>
+                <button class="dialog-close" id="closeAuthBtn" type="button" aria-label="Close">×</button>
+            </div>
+
+            <div id="authForms">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-auth-tab="signin" type="button">Sign in</button>
+                    <button class="auth-tab" data-auth-tab="signup" type="button">Create account</button>
+                </div>
+                <p class="auth-error" id="authError" role="alert"></p>
+                <form class="auth-form" id="signinForm">
+                    <label>Email<input id="signinEmail" type="email" required autocomplete="email"></label>
+                    <label>Password<input id="signinPassword" type="password" required autocomplete="current-password"></label>
+                    <button class="auth-submit" type="submit">Sign in</button>
+                </form>
+                <form class="auth-form" id="signupForm" hidden>
+                    <label>Name<input id="signupName" type="text" required maxlength="100" autocomplete="name"></label>
+                    <label>Email<input id="signupEmail" type="email" required autocomplete="email"></label>
+                    <label>Password<input id="signupPassword" type="password" required minlength="8" autocomplete="new-password"></label>
+                    <button class="auth-submit" type="submit">Create account</button>
+                </form>
+            </div>
+
+            <div class="signed-in-only" id="accountDetails" hidden>
+                <p class="account-details" id="accountDetailsText"></p>
+                <button class="signout-btn" id="signoutBtn" type="button">Sign out</button>
+            </div>
+        </div>
+    </dialog>
+
     <script>
         let currentMode = 'combined';
         let sessionId = 'session-' + Date.now();
@@ -824,6 +907,16 @@
         const newChatBtn = document.getElementById('newChatBtn');
         const promptHistory = document.getElementById('promptHistory');
         const promptHistoryEmpty = document.getElementById('promptHistoryEmpty');
+        const historyTitle = document.getElementById('historyTitle');
+        const historyHelp = document.getElementById('historyHelp');
+        const accountBtn = document.getElementById('accountBtn');
+        const authDialog = document.getElementById('authDialog');
+        const closeAuthBtn = document.getElementById('closeAuthBtn');
+        const authForms = document.getElementById('authForms');
+        const accountDetails = document.getElementById('accountDetails');
+        const accountDetailsText = document.getElementById('accountDetailsText');
+        const authError = document.getElementById('authError');
+        let currentUser = null;
 
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -855,7 +948,8 @@
             }
 
             readabilityBadge.classList.remove('visible');
-            clearPromptHistory();
+            if (currentUser) loadSavedPrompts();
+            else clearPromptHistory();
         });
 
         // Auto-resize textarea
@@ -898,6 +992,7 @@
                 } else {
                     addMessageHTML(data.html, 'ai');
                     updateReadabilityBadge(data.readability);
+                    if (currentUser) loadSavedPrompts();
                 }
             } catch (err) {
                 addMessage('Could not reach the server. Is it running?', 'ai');
@@ -937,6 +1032,97 @@
         function clearPromptHistory() {
             promptHistory.replaceChildren(promptHistoryEmpty);
         }
+
+        function renderPromptHistory(prompts) {
+            promptHistory.replaceChildren();
+            if (!prompts.length) {
+                promptHistory.appendChild(promptHistoryEmpty);
+                return;
+            }
+            prompts.forEach(({ prompt }) => {
+                const item = document.createElement('div');
+                item.className = 'prompt-history-item';
+                item.textContent = prompt;
+                item.title = prompt;
+                promptHistory.appendChild(item);
+            });
+        }
+
+        async function loadSavedPrompts() {
+            const response = await fetch('/api/history');
+            if (!response.ok) return;
+            const data = await response.json();
+            renderPromptHistory(data.prompts.reverse());
+        }
+
+        function setCurrentUser(user) {
+            currentUser = user;
+            accountBtn.textContent = user ? user.name : 'Sign in';
+            historyTitle.textContent = user ? user.name + "'s prompts" : 'This session';
+            historyHelp.textContent = user
+                ? 'Saved prompts from all your signed-in sessions.'
+                : 'Your prompt topics appear here.';
+            authForms.hidden = Boolean(user);
+            accountDetails.hidden = !user;
+            if (user) {
+                accountDetailsText.textContent = user.name + ' · ' + user.email;
+                loadSavedPrompts();
+            }
+        }
+
+        function showAuth(mode = 'signin') {
+            authError.textContent = '';
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.authTab === mode);
+            });
+            document.getElementById('signinForm').hidden = mode !== 'signin';
+            document.getElementById('signupForm').hidden = mode !== 'signup';
+            authDialog.showModal();
+        }
+
+        async function submitAuth(endpoint, data) {
+            authError.textContent = '';
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                authError.textContent = result.error || 'Could not complete that request.';
+                return;
+            }
+            setCurrentUser(result.user);
+            authDialog.close();
+        }
+
+        accountBtn.addEventListener('click', () => showAuth());
+        closeAuthBtn.addEventListener('click', () => authDialog.close());
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => showAuth(tab.dataset.authTab));
+        });
+        document.getElementById('signinForm').addEventListener('submit', event => {
+            event.preventDefault();
+            submitAuth('/api/auth/signin', {
+                email: document.getElementById('signinEmail').value,
+                password: document.getElementById('signinPassword').value,
+            });
+        });
+        document.getElementById('signupForm').addEventListener('submit', event => {
+            event.preventDefault();
+            submitAuth('/api/auth/signup', {
+                name: document.getElementById('signupName').value,
+                email: document.getElementById('signupEmail').value,
+                password: document.getElementById('signupPassword').value,
+            });
+        });
+        document.getElementById('signoutBtn').addEventListener('click', async () => {
+            await fetch('/api/auth/signout', { method: 'POST' });
+            setCurrentUser(null);
+            clearPromptHistory();
+            authDialog.close();
+        });
+        fetch('/api/auth/me').then(response => response.json()).then(data => setCurrentUser(data.user));
 
         function updateReadabilityBadge(info) {
             if (!info) return;
