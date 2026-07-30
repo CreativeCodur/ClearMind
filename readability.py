@@ -32,9 +32,9 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 
 import config
-import spacy
+import pysbd
 
-nlp = spacy.load("en_core_web_sm")
+_segmenter = pysbd.Segmenter(language="en", clean=False)
 
 # ─── Syllable counter ───────────────────────────────────────────────────────────
 
@@ -89,10 +89,7 @@ def count_syllables(word: str) -> int:
 
 def split_sentences(text: str) -> List[str]:
     """Split text into sentences. Handles abbreviations and decimals."""
-    # Use the spacy nlp to split the text into sentences
-    doc = nlp(text)
-
-    return [sent.text for sent in doc.sents]
+    return _segmenter.segment(text)
 
 def get_words(text: str) -> List[str]:
     """Extract words from text (alpha characters only)."""
