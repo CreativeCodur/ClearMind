@@ -110,11 +110,21 @@ def extract_tldr(text: str) -> tuple:
     return None, text
 
 
+_LIST_LINE = re.compile(r'^\s*(\d+[.)]|[-*•])\s')
+
+
+def _is_list_block(text: str) -> bool:
+    lines = [l for l in text.strip().splitlines() if l.strip()]
+    if len(lines) < 2:
+        return False
+    return sum(1 for l in lines if _LIST_LINE.match(l)) >= len(lines) * 0.5
+
+
 def chunk_text(text: str, sentences_per_chunk: int) -> List[str]:
     """Split text into chunks of N sentences each.
 
-    Preserves existing paragraph breaks where possible. If the text
-    already has short paragraphs, those are kept as-is.
+    Preserves existing paragraph breaks and keeps numbered/bulleted
+    lists as single chunks.
 
     Args:
         text: Body text to chunk.
@@ -126,18 +136,23 @@ def chunk_text(text: str, sentences_per_chunk: int) -> List[str]:
     if not text.strip():
         return [text]
 
-    # First, respect existing paragraph breaks
     paragraphs = re.split(r'\n\s*\n', text.strip())
 
     chunks = []
     for para in paragraphs:
+        para = para.strip()
+        if not para:
+            continue
+
+        if _is_list_block(para):
+            chunks.append(para)
+            continue
+
         sentences = split_sentences(para)
 
         if len(sentences) <= sentences_per_chunk:
-            # Paragraph is already small enough
-            chunks.append(para.strip())
+            chunks.append(para)
         else:
-            # Split this paragraph into smaller chunks
             for i in range(0, len(sentences), sentences_per_chunk):
                 chunk_sents = sentences[i:i + sentences_per_chunk]
                 chunks.append(' '.join(chunk_sents))
