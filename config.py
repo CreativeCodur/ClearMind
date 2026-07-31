@@ -10,7 +10,7 @@ Design rationale:
 """
 
 # ─── API ────────────────────────────────────────────────────────────────────────
-MODEL = "google/gemini-2.0-flash-exp:free"
+MODEL = "openai/gpt-oss-20b"
 FALLBACK_MODELS = []  # Disabled — non-Gemini free models produce <unk> token spam
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MAX_TOKENS = 4096
