@@ -890,6 +890,8 @@
         const readabilityPasses = document.getElementById('readabilityPasses');
         const newChatBtn = document.getElementById('newChatBtn');
 
+        let chatStarted = false;
+
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -902,6 +904,7 @@
 
         // New chat
         newChatBtn.addEventListener('click', async () => {
+            if (chatStarted === false) return;
             try {
                 await fetch('/api/reset', {
                     method: 'POST',
@@ -920,6 +923,7 @@
             }
 
             readabilityBadge.classList.remove('visible');
+            chatStarted = false;
         });
 
         // Auto-resize textarea
@@ -970,6 +974,8 @@
                 scrollToBottom();
                 userInput.focus();
             }
+
+            chatStarted = true;
         }
 
         function addMessage(text, role) {
