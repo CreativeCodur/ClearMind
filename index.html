@@ -187,6 +187,27 @@
             text-transform: uppercase;
         }
 
+        .history-tabs {
+            display: flex;
+            gap: 4px;
+            margin: 0 8px 8px;
+        }
+
+        .history-tab {
+            background: transparent;
+            border: 0;
+            border-radius: 7px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            flex: 1;
+            font: inherit;
+            font-size: 0.72rem;
+            padding: 7px 4px;
+        }
+
+        .history-tab.active { background: var(--accent-faint); color: var(--accent); font-weight: 700; }
+        .history-view[hidden] { display: none; }
+
         .history-empty {
             color: var(--text-secondary);
             font-size: 0.78rem;
@@ -252,6 +273,9 @@
         }
 
         .history-item.dragging { opacity: 0.45; }
+
+        .conversation-item { white-space: normal; }
+        .conversation-date { color: var(--text-secondary); display: block; font-size: 0.66rem; font-weight: 400; margin-top: 3px; }
 
         .account-btn-removed {
             background: var(--accent);
@@ -909,12 +933,22 @@
     <div class="app">
         <aside class="history-panel" aria-label="Conversation history">
             <h2>History</h2>
-            <p class="history-empty" id="historyEmpty">Your conversation topics will appear here.</p>
-            <nav class="history-list" id="historyList" aria-label="Past messages"></nav>
-            <button class="history-trash" id="historyTrash" type="button" aria-label="Delete the selected history item, or drag one here">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-3 6h12l-1 11H7L6 9zm4 2v7h2v-7h-2zm4 0v7h2v-7h-2z"/></svg>
-                Drag here to delete
-            </button>
+            <div class="history-tabs" role="tablist" aria-label="History views">
+                <button class="history-tab active" type="button" data-history-view="chat">Chat log</button>
+                <button class="history-tab" type="button" data-history-view="conversations">Conversations</button>
+            </div>
+            <div class="history-view" id="chatHistoryView">
+                <p class="history-empty" id="historyEmpty">Your conversation topics will appear here.</p>
+                <nav class="history-list" id="historyList" aria-label="Current chat messages"></nav>
+                <button class="history-trash" id="historyTrash" type="button" aria-label="Delete the selected history item, or drag one here">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-3 6h12l-1 11H7L6 9zm4 2v7h2v-7h-2zm4 0v7h2v-7h-2z"/></svg>
+                    Drag here to delete
+                </button>
+            </div>
+            <div class="history-view" id="conversationsHistoryView" hidden>
+                <p class="history-empty" id="conversationsEmpty">Saved conversations will appear here.</p>
+                <nav class="history-list" id="conversationsList" aria-label="Saved conversations"></nav>
+            </div>
         </aside>
 
         <div class="main-content">
@@ -1004,11 +1038,16 @@
         const historyList = document.getElementById('historyList');
         const historyEmpty = document.getElementById('historyEmpty');
         const historyTrash = document.getElementById('historyTrash');
+        const chatHistoryView = document.getElementById('chatHistoryView');
+        const conversationsHistoryView = document.getElementById('conversationsHistoryView');
+        const conversationsList = document.getElementById('conversationsList');
+        const conversationsEmpty = document.getElementById('conversationsEmpty');
 
         let chatStarted = false;
         let historyCount = 0;
         let historyEntries = [];
         let selectedHistoryEntry = null;
+        const conversationsStorageKey = 'clearmind-saved-conversations';
         const historyStopwords = new Set([
             'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
             'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
@@ -1029,16 +1068,20 @@
             });
         });
 
+        document.querySelectorAll('.history-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const showConversations = tab.dataset.historyView === 'conversations';
+                document.querySelectorAll('.history-tab').forEach(button => button.classList.toggle('active', button === tab));
+                chatHistoryView.hidden = showConversations;
+                conversationsHistoryView.hidden = !showConversations;
+                if (showConversations) renderSavedConversations();
+            });
+        });
+
         // New chat
         newChatBtn.addEventListener('click', async () => {
             if (chatStarted === false) return;
-            try {
-                await fetch('/api/reset', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_id: sessionId }),
-                });
-            } catch (e) {}
+            saveCurrentConversation();
 
             sessionId = 'session-' + Date.now();
 
@@ -1133,6 +1176,69 @@
                 .sort((a, b) => (counts.get(b) - counts.get(a)) || (b.length - a.length) || a.localeCompare(b))
                 .slice(0, 2);
             return keywords.length ? keywords.join(' · ') : 'Message ' + (historyCount + 1);
+        }
+
+        function savedConversations() {
+            try { return JSON.parse(localStorage.getItem(conversationsStorageKey)) || []; }
+            catch (e) { return []; }
+        }
+
+        function saveCurrentConversation() {
+            if (historyEntries.length === 0) return;
+
+            const messages = [...chatContainer.querySelectorAll('.message')].map(message => ({
+                role: message.classList.contains('user') ? 'user' : 'ai',
+                content: message.classList.contains('user') ? message.textContent : message.innerHTML,
+            }));
+            const prompts = historyEntries.map(entry => entry.item.title);
+            const label = getKeywords(prompts.join(' '));
+            const snapshot = { id: sessionId, label, prompts, messages, savedAt: Date.now() };
+            const updated = savedConversations().filter(conversation => conversation.id !== sessionId);
+            updated.unshift(snapshot);
+            localStorage.setItem(conversationsStorageKey, JSON.stringify(updated));
+            renderSavedConversations();
+        }
+
+        function renderSavedConversations() {
+            const conversations = savedConversations();
+            conversationsList.replaceChildren();
+            conversationsEmpty.hidden = conversations.length > 0;
+            conversations.forEach(conversation => {
+                const item = document.createElement('button');
+                item.className = 'history-item conversation-item';
+                item.type = 'button';
+                item.textContent = conversation.label;
+                const date = document.createElement('span');
+                date.className = 'conversation-date';
+                date.textContent = new Date(conversation.savedAt).toLocaleDateString();
+                item.appendChild(date);
+                item.addEventListener('click', () => restoreConversation(conversation));
+                conversationsList.appendChild(item);
+            });
+        }
+
+        function restoreConversation(conversation) {
+            sessionId = conversation.id;
+            chatContainer.querySelectorAll('.message').forEach(message => message.remove());
+            historyList.replaceChildren();
+            historyEntries = [];
+            historyCount = 0;
+            selectedHistoryEntry = null;
+            let currentEntry = null;
+            (conversation.messages || []).forEach(message => {
+                if (message.role === 'user') {
+                    const element = addMessage(message.content, 'user');
+                    currentEntry = addHistoryItem(message.content, element);
+                } else {
+                    const element = addRestoredHTML(message.content, 'ai');
+                    if (currentEntry) currentEntry.responseElement = element;
+                }
+            });
+            historyEmpty.hidden = historyEntries.length > 0;
+            if (welcome) welcome.style.display = 'none';
+            chatStarted = historyEntries.length > 0;
+            document.querySelector('[data-history-view="chat"]').click();
+            scrollToBottom();
         }
 
         function addHistoryItem(message, messageElement) {
@@ -1237,6 +1343,14 @@
             }
 
             scrollToBottom();
+            return div;
+        }
+
+        function addRestoredHTML(html, role) {
+            const div = document.createElement('div');
+            div.className = 'message ' + role;
+            div.innerHTML = html;
+            chatContainer.insertBefore(div, loading);
             return div;
         }
 
