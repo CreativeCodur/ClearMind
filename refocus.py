@@ -34,6 +34,22 @@ from typing import List, Dict, Optional, Tuple
 import config
 
 
+# Common conversational words should not become the subject of a refocus
+# notice.  Keep this separate from the TF-IDF tokens: they still help with
+# drift detection, but are not useful to show back to the user as a topic.
+TOPIC_STOPWORDS = {
+    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'can', 'shall', 'to', 'of', 'in', 'for',
+    'on', 'with', 'at', 'by', 'from', 'it', 'its', 'this', 'that', 'these',
+    'those', 'i', 'you', 'he', 'she', 'we', 'they', 'me', 'him', 'her',
+    'us', 'them', 'my', 'your', 'his', 'our', 'their', 'and', 'but', 'or',
+    'not', 'no', 'so', 'if', 'as', 'just', 'about', 'what', 'how', 'when',
+    'where', 'why', 'which', 'who', 'whom', 'please', 'help', 'want',
+    'need', 'like', 'really', 'also', 'get', 'got', 'make', 'tell', 'give',
+}
+
+
 def tokenize(text: str) -> List[str]:
     """Lowercase and extract alphabetic tokens."""
     return re.findall(r'[a-z]+', text.lower())
@@ -86,6 +102,27 @@ def cosine_similarity(vec_a: Dict[str, float], vec_b: Dict[str, float]) -> float
         return 0.0
 
     return dot / (mag_a * mag_b)
+
+
+def most_significant_keyword(tokens: List[str], idf: Dict[str, float]) -> Optional[str]:
+    """Return the strongest user-mentioned topic keyword.
+
+    Repeated words score higher, while IDF gives more specific words a small
+    advantage.  Conversational filler and very short words are excluded so the
+    refocus message names the user's actual subject, not a function word.
+    """
+    candidates = [
+        token for token in tokens
+        if len(token) > 2 and token not in TOPIC_STOPWORDS
+    ]
+    if not candidates:
+        return None
+
+    counts = Counter(candidates)
+    return max(
+        counts,
+        key=lambda word: (counts[word] * idf.get(word, 1.0), counts[word], len(word)),
+    )
 
 
 class DriftDetector:
@@ -154,11 +191,12 @@ class DriftDetector:
         # Build refocus message if drifting
         refocus_msg = None
         if is_drifting:
-            # Identify the dominant topic from the window
-            topic_words = sorted(
-                vec_window.items(), key=lambda x: x[1], reverse=True
-            )[:3]
-            topic_hint = ", ".join(w for w, _ in topic_words)
+            # Name one meaningful keyword from the earlier user prompts.
+            # A single, specific subject is clearer and less distracting than
+            # a list of raw TF-IDF words.
+            topic_hint = most_significant_keyword(window_combined, idf)
+            if topic_hint is None:
+                topic_hint = "that earlier topic"
 
             # Warm, supportive messages — never clinical or passive-aggressive.
             # Per Giri et al. (2026): neurodivergent users experience
@@ -206,19 +244,10 @@ class DriftDetector:
             all_tokens.extend(doc)
 
         counts = Counter(all_tokens)
-        # Filter stopwords (basic list)
-        stopwords = {
-            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
-            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
-            'would', 'could', 'should', 'may', 'might', 'can', 'shall',
-            'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from',
-            'it', 'its', 'this', 'that', 'these', 'those', 'i', 'you',
-            'he', 'she', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
-            'my', 'your', 'his', 'our', 'their', 'and', 'but', 'or',
-            'not', 'no', 'so', 'if', 'as', 'just', 'about', 'what',
-            'how', 'when', 'where', 'why', 'which', 'who', 'whom',
+        filtered = {
+            word: count for word, count in counts.items()
+            if word not in TOPIC_STOPWORDS and len(word) > 2
         }
-        filtered = {w: c for w, c in counts.items() if w not in stopwords and len(w) > 2}
         top = sorted(filtered.items(), key=lambda x: x[1], reverse=True)[:5]
         return ", ".join(f"{w} ({c})" for w, c in top)
 
