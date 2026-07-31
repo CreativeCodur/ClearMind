@@ -36,7 +36,6 @@ from readability import (
 from refocus import DriftDetector
 from formatter import format_response, strip_format_markers, to_html
 from gemini_client import GeminiClient
-from database import initialize_database
 
 # ─── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -44,9 +43,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("clearmind")
 
 app = Flask(__name__, static_folder="static")
-app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev")
 CORS(app)
-initialize_database()
 
 # Initialize Gemini client (will fail fast if no API key)
 try:
