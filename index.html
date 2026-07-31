@@ -963,7 +963,7 @@
                     updateReadabilityBadge(data.readability);
                 }
             } catch (err) {
-                addMessage('Could not reach the server. Is it running?', 'ai');
+                addMessage('Could not reach the server. Is it running? (' + err.message + ')', 'ai');
             } finally {
                 loading.classList.remove('visible');
                 sendBtn.disabled = false;
