@@ -21,7 +21,7 @@ Research basis (full pipeline justification):
 
 import os
 import logging
-import html
+import html as html_lib
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
@@ -107,7 +107,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
                 "raw": "",
             }
         return {
-            "html": f'<div class="clearmind-chunk">API error: {html.escape(error_str[:200])}</div>',
+            "html": f'<div class="clearmind-chunk">API error: {html_lib.escape(error_str[:200])}</div>',
             "readability": None,
             "drift": None,
             "raw": "",
