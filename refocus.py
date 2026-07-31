@@ -159,12 +159,31 @@ class DriftDetector:
                 vec_window.items(), key=lambda x: x[1], reverse=True
             )[:3]
             topic_hint = ", ".join(w for w, _ in topic_words)
-            refocus_msg = (
-                f"It looks like you might have shifted away from what you "
-                f"were working on (which was about: {topic_hint}). "
-                f"Would you like to continue with that, or is this new "
-                f"direction what you want to explore?"
-            )
+
+            # Warm, supportive messages — never clinical or passive-aggressive.
+            # Per Giri et al. (2026): neurodivergent users experience
+            # rejection sensitive dysphoria; blunt phrasing feels like
+            # judgment. Per Barkley (2015) [7]: topic-switching is a
+            # natural ADHD behavior, not a mistake to correct.
+            import random
+            gentle_msgs = [
+                (
+                    f"No worries at all — just a heads-up that you were "
+                    f"exploring {topic_hint} earlier. Want to come back to "
+                    f"that, or keep going with this? Either is fine!"
+                ),
+                (
+                    f"Hey, totally okay to switch gears! For reference, "
+                    f"you were looking into {topic_hint} before. "
+                    f"Happy to help with whatever you need right now."
+                ),
+                (
+                    f"Quick friendly note: your earlier thread was about "
+                    f"{topic_hint}. No pressure to go back — just "
+                    f"bookmarking it so you don't lose it."
+                ),
+            ]
+            refocus_msg = random.choice(gentle_msgs)
 
         return DriftResult(
             is_drifting=is_drifting,

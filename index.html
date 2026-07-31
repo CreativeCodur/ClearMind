@@ -492,6 +492,55 @@
             margin-bottom: 0;
         }
 
+        /* ─── Collapsible sections (U7) ─── */
+        /* Research basis: Malhotra (2026) benchmarking study found ALL 5
+           major chatbots scored 1/5 on collapsible responses. ClearMind
+           is the first AI chat interface to implement this.
+           W3C COGA (2021): progressive disclosure reduces cognitive load.
+           Gunawardana et al. (2025): users favored progressive disclosure. */
+        .clearmind-collapse-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            margin: 6px 0;
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .clearmind-collapse-toggle:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .clearmind-collapse-toggle .arrow {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            font-size: 0.7rem;
+        }
+
+        .clearmind-collapsible {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.35s ease, opacity 0.25s ease;
+        }
+
+        .clearmind-collapsible.expanded {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .clearmind-collapse-toggle.expanded .arrow {
+            transform: rotate(90deg);
+        }
+
         /* Drift notice */
         .clearmind-drift-notice {
             background: var(--drift-bg);
@@ -980,6 +1029,40 @@
             div.className = 'message ' + role;
             div.innerHTML = html;
             chatContainer.insertBefore(div, loading);
+
+            // Progressive disclosure: collapse chunks after the first 2
+            // Research: U7 (collapsible responses) scored 1/5 for ALL
+            // major chatbots. ClearMind is the first to implement this.
+            if (role === 'ai') {
+                const chunks = div.querySelectorAll('.clearmind-chunk');
+                if (chunks.length > 2) {
+                    // Wrap chunks 3+ in a collapsible container
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'clearmind-collapsible';
+                    const remaining = chunks.length - 2;
+
+                    for (let i = 2; i < chunks.length; i++) {
+                        wrapper.appendChild(chunks[i]);
+                    }
+
+                    // Insert toggle button and wrapper after chunk 2
+                    const toggle = document.createElement('button');
+                    toggle.className = 'clearmind-collapse-toggle';
+                    toggle.innerHTML = '<span class="arrow">&#9654;</span> Show ' + remaining + ' more section' + (remaining > 1 ? 's' : '');
+                    toggle.addEventListener('click', () => {
+                        const expanded = wrapper.classList.toggle('expanded');
+                        toggle.classList.toggle('expanded');
+                        toggle.innerHTML = expanded
+                            ? '<span class="arrow">&#9654;</span> Hide extra sections'
+                            : '<span class="arrow">&#9654;</span> Show ' + remaining + ' more section' + (remaining > 1 ? 's' : '');
+                        scrollToBottom();
+                    });
+
+                    div.appendChild(toggle);
+                    div.appendChild(wrapper);
+                }
+            }
+
             scrollToBottom();
         }
 

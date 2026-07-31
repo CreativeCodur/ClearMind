@@ -16,12 +16,88 @@ GARBAGE_PATTERNS = [
     "as an ai language model", "classification:",
 ]
 
+# Patterns that indicate the model leaked its chain-of-thought
+# or internal reasoning (common with Gemini flash models)
+THOUGHT_PATTERNS = [
+    r'<think>.*?</think>',        # explicit think tags
+    r'<thinking>.*?</thinking>',  # alternative think tags
+    r'\*\*Thinking\*\*:.*?\n',    # markdown-style thinking
+    r'(?:^|\n)(?:Step \d+:|Reasoning:).*?(?=\n[A-Z]|\Z)',  # reasoning prefixes
+]
+
+# Minimum unique-phrase ratio before we flag as repetition loop
+REPETITION_THRESHOLD = 0.3
+
 
 def _is_garbage(text: str) -> bool:
     stripped = text.strip().lower()
     if len(stripped.split()) < 4:
         return True
     return any(stripped.startswith(p) for p in GARBAGE_PATTERNS)
+
+
+def _sanitize_output(text: str) -> str:
+    """Clean model output of thought-process leaks and repetition loops.
+
+    Addresses the bug where models return internal reasoning followed
+    by repeated fragments (e.g., '1? 1? 1? 1?' or 'is it is it is it').
+
+    Research basis:
+      - Benchmarking study (Malhotra, 2026): observed models leaking
+        chain-of-thought tokens and entering repetition loops on
+        free-tier API calls.
+    """
+    import re
+
+    # 1. Strip chain-of-thought / thinking blocks
+    for pattern in THOUGHT_PATTERNS:
+        text = re.sub(pattern, '', text, flags=re.DOTALL | re.IGNORECASE)
+
+    # 2. Detect and truncate repetition loops
+    # Split into sentences/fragments and check for excessive repetition
+    lines = text.split('\n')
+    cleaned_lines = []
+    seen_lines = {}
+    consecutive_repeats = 0
+
+    for line in lines:
+        stripped = line.strip().lower()
+        if not stripped:
+            cleaned_lines.append(line)
+            consecutive_repeats = 0
+            continue
+
+        if stripped in seen_lines and len(stripped) < 100:
+            consecutive_repeats += 1
+            if consecutive_repeats >= 3:
+                # Skip — this is a repetition loop
+                continue
+        else:
+            consecutive_repeats = 0
+
+        seen_lines[stripped] = True
+        cleaned_lines.append(line)
+
+    text = '\n'.join(cleaned_lines)
+
+    # 3. Catch short-phrase repetition within a single line
+    # e.g., "is it 1? is it 1? is it 1? is it 1?"
+    words = text.split()
+    if len(words) > 20:
+        # Check if any 3-word phrase repeats more than 4 times
+        for n in (3, 4, 5):
+            trigrams = [' '.join(words[i:i+n]) for i in range(len(words) - n + 1)]
+            from collections import Counter
+            counts = Counter(trigrams)
+            for phrase, count in counts.items():
+                if count >= 4:
+                    # Replace all but the first two occurrences
+                    parts = text.split(phrase)
+                    if len(parts) > 3:
+                        text = phrase.join(parts[:3]) + parts[-1]
+                    break
+
+    return text.strip()
 
 
 class GeminiClient:
@@ -120,7 +196,9 @@ class GeminiClient:
             try:
                 content = self._call_api(messages, model, temperature, max_tokens)
                 if not _is_garbage(content):
-                    return content
+                    content = _sanitize_output(content)
+                    if content and not _is_garbage(content):
+                        return content
             except RuntimeError as e:
                 last_error = e
                 continue
