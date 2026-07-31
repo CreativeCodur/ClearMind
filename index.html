@@ -1010,9 +1010,6 @@
 
             const messages = chatContainer.querySelectorAll('.message');
             messages.forEach(m => m.remove());
-            historyList.replaceChildren();
-            historyEmpty.hidden = false;
-            historyCount = 0;
 
             if (welcome) {
                 welcome.style.display = '';
