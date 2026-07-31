@@ -203,6 +203,31 @@
             padding: 2px;
         }
 
+        .history-trash {
+            align-items: center;
+            background: transparent;
+            border: 1px dashed var(--input-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            font: inherit;
+            font-size: 0.73rem;
+            gap: 6px;
+            justify-content: center;
+            margin: 8px;
+            padding: 9px;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+        }
+
+        .history-trash.drag-over {
+            background: #fff0ed;
+            border-color: #c47a5a;
+            color: #a54f38;
+        }
+
+        .history-trash svg { fill: currentColor; height: 15px; width: 15px; }
+
         .history-item {
             background: transparent;
             border: 1px solid transparent;
@@ -225,6 +250,8 @@
             color: var(--accent);
             outline: none;
         }
+
+        .history-item.dragging { opacity: 0.45; }
 
         .account-btn-removed {
             background: var(--accent);
@@ -884,6 +911,10 @@
             <h2>History</h2>
             <p class="history-empty" id="historyEmpty">Your conversation topics will appear here.</p>
             <nav class="history-list" id="historyList" aria-label="Past messages"></nav>
+            <button class="history-trash" id="historyTrash" type="button" aria-label="Delete the selected history item, or drag one here">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-3 6h12l-1 11H7L6 9zm4 2v7h2v-7h-2zm4 0v7h2v-7h-2z"/></svg>
+                Drag here to delete
+            </button>
         </aside>
 
         <div class="main-content">
@@ -972,9 +1003,12 @@
         const newChatBtn = document.getElementById('newChatBtn');
         const historyList = document.getElementById('historyList');
         const historyEmpty = document.getElementById('historyEmpty');
+        const historyTrash = document.getElementById('historyTrash');
 
         let chatStarted = false;
         let historyCount = 0;
+        let historyEntries = [];
+        let selectedHistoryEntry = null;
         const historyStopwords = new Set([
             'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
             'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
@@ -1013,6 +1047,8 @@
             historyList.replaceChildren();
             historyEmpty.hidden = false;
             historyCount = 0;
+            historyEntries = [];
+            selectedHistoryEntry = null;
 
             if (welcome) {
                 welcome.style.display = '';
@@ -1036,7 +1072,7 @@
             if (welcome) welcome.style.display = 'none';
 
             const userMessage = addMessage(message, 'user');
-            addHistoryItem(message, userMessage);
+            const historyEntry = addHistoryItem(message, userMessage);
             userInput.value = '';
             userInput.style.height = 'auto';
 
@@ -1058,13 +1094,13 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    addMessage('Error: ' + data.error, 'ai');
+                    historyEntry.responseElement = addMessage('Error: ' + data.error, 'ai');
                 } else {
-                    addMessageHTML(data.html, 'ai');
+                    historyEntry.responseElement = addMessageHTML(data.html, 'ai');
                     updateReadabilityBadge(data.readability);
                 }
             } catch (err) {
-                addMessage('Could not reach the server. Is it running? (' + err.message + ')', 'ai');
+                historyEntry.responseElement = addMessage('Could not reach the server. Is it running? (' + err.message + ')', 'ai');
             } finally {
                 loading.classList.remove('visible');
                 sendBtn.disabled = false;
@@ -1105,6 +1141,7 @@
             const item = document.createElement('button');
             item.className = 'history-item';
             item.type = 'button';
+            item.draggable = true;
             item.textContent = topic;
             item.title = message;
             item.setAttribute('aria-label', 'Go to message about ' + topic);
@@ -1114,13 +1151,51 @@
             item.addEventListener('click', () => {
                 document.querySelectorAll('.history-item').forEach(button => button.classList.remove('active'));
                 item.classList.add('active');
+                selectedHistoryEntry = entry;
                 messageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 messageElement.focus({ preventScroll: true });
             });
 
+            const entry = { item, messageElement, responseElement: null };
+            item.addEventListener('dragstart', (event) => {
+                item.classList.add('dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', String(historyEntries.indexOf(entry)));
+            });
+            item.addEventListener('dragend', () => item.classList.remove('dragging'));
+
             historyList.appendChild(item);
             historyEmpty.hidden = true;
+            historyEntries.push(entry);
+            return entry;
         }
+
+        function deleteHistoryEntry(entry) {
+            entry.item.remove();
+            entry.messageElement.remove();
+            if (entry.responseElement) entry.responseElement.remove();
+            historyEntries = historyEntries.filter(candidate => candidate !== entry);
+            if (selectedHistoryEntry === entry) selectedHistoryEntry = null;
+            if (historyEntries.length === 0) historyEmpty.hidden = false;
+        }
+
+        historyTrash.addEventListener('click', () => {
+            if (selectedHistoryEntry) deleteHistoryEntry(selectedHistoryEntry);
+        });
+
+        historyTrash.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            historyTrash.classList.add('drag-over');
+        });
+        historyTrash.addEventListener('dragleave', () => historyTrash.classList.remove('drag-over'));
+        historyTrash.addEventListener('drop', (event) => {
+            event.preventDefault();
+            historyTrash.classList.remove('drag-over');
+            const entryIndex = Number(event.dataTransfer.getData('text/plain'));
+            const entry = historyEntries[entryIndex];
+            if (entry) deleteHistoryEntry(entry);
+        });
 
         function addMessageHTML(html, role) {
             const div = document.createElement('div');
@@ -1162,6 +1237,7 @@
             }
 
             scrollToBottom();
+            return div;
         }
 
         function updateReadabilityBadge(info) {
