@@ -948,6 +948,10 @@
             <div class="history-view" id="conversationsHistoryView" hidden>
                 <p class="history-empty" id="conversationsEmpty">Saved conversations will appear here.</p>
                 <nav class="history-list" id="conversationsList" aria-label="Saved conversations"></nav>
+                <button class="history-trash" id="conversationsTrash" type="button" aria-label="Delete the selected saved conversation, or drag one here">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-3 6h12l-1 11H7L6 9zm4 2v7h2v-7h-2zm4 0v7h2v-7h-2z"/></svg>
+                    Drag here to delete
+                </button>
             </div>
         </aside>
 
@@ -1042,18 +1046,20 @@
         const conversationsHistoryView = document.getElementById('conversationsHistoryView');
         const conversationsList = document.getElementById('conversationsList');
         const conversationsEmpty = document.getElementById('conversationsEmpty');
+        const conversationsTrash = document.getElementById('conversationsTrash');
 
         let chatStarted = false;
         let historyCount = 0;
         let historyEntries = [];
         let selectedHistoryEntry = null;
+        let selectedConversationId = null;
         const conversationsStorageKey = 'clearmind-saved-conversations';
         const historyStopwords = new Set([
             'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
             'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
             'should', 'may', 'might', 'can', 'to', 'of', 'in', 'for', 'on', 'with',
             'at', 'by', 'from', 'it', 'its', 'this', 'that', 'i', 'you', 'we', 'they',
-            'my', 'your', 'and', 'but', 'or', 'not', 'so', 'if', 'as', 'just', 'about',
+            'my', 'your', 'and', 'but', 'or', 'not', 'so', 'if', 'as', 'talk', 'about', 'new', 'old', 'just', 'about',
             'what', 'how', 'when', 'where', 'why', 'please', 'help', 'want', 'need',
             'like', 'really', 'also', 'get', 'got', 'make', 'tell', 'give'
         ]);
@@ -1207,14 +1213,31 @@
                 const item = document.createElement('button');
                 item.className = 'history-item conversation-item';
                 item.type = 'button';
+                item.draggable = true;
                 item.textContent = conversation.label;
                 const date = document.createElement('span');
                 date.className = 'conversation-date';
                 date.textContent = new Date(conversation.savedAt).toLocaleDateString();
                 item.appendChild(date);
-                item.addEventListener('click', () => restoreConversation(conversation));
+                item.addEventListener('click', () => {
+                    selectedConversationId = conversation.id;
+                    restoreConversation(conversation);
+                });
+                item.addEventListener('dragstart', (event) => {
+                    item.classList.add('dragging');
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', conversation.id);
+                });
+                item.addEventListener('dragend', () => item.classList.remove('dragging'));
                 conversationsList.appendChild(item);
             });
+        }
+
+        function deleteSavedConversation(conversationId) {
+            const updated = savedConversations().filter(conversation => conversation.id !== conversationId);
+            localStorage.setItem(conversationsStorageKey, JSON.stringify(updated));
+            if (selectedConversationId === conversationId) selectedConversationId = null;
+            renderSavedConversations();
         }
 
         function restoreConversation(conversation) {
@@ -1301,6 +1324,22 @@
             const entryIndex = Number(event.dataTransfer.getData('text/plain'));
             const entry = historyEntries[entryIndex];
             if (entry) deleteHistoryEntry(entry);
+        });
+
+        conversationsTrash.addEventListener('click', () => {
+            if (selectedConversationId) deleteSavedConversation(selectedConversationId);
+        });
+        conversationsTrash.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            conversationsTrash.classList.add('drag-over');
+        });
+        conversationsTrash.addEventListener('dragleave', () => conversationsTrash.classList.remove('drag-over'));
+        conversationsTrash.addEventListener('drop', (event) => {
+            event.preventDefault();
+            conversationsTrash.classList.remove('drag-over');
+            const conversationId = event.dataTransfer.getData('text/plain');
+            if (conversationId) deleteSavedConversation(conversationId);
         });
 
         function addMessageHTML(html, role) {
