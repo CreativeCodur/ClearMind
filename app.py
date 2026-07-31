@@ -21,9 +21,8 @@ Research basis (full pipeline justification):
 
 import os
 import logging
-import secrets
 import html
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 import config
@@ -37,13 +36,7 @@ from readability import (
 from refocus import DriftDetector
 from formatter import format_response, strip_format_markers, to_html
 from gemini_client import GeminiClient
-from database import (
-    authenticate_user,
-    create_user,
-    get_prompts,
-    initialize_database,
-    save_prompt,
-)
+from database import initialize_database
 
 # ─── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -51,11 +44,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("clearmind")
 
 app = Flask(__name__, static_folder="static")
-app.config.update(
-    SECRET_KEY=os.environ.get("FLASK_SECRET_KEY", secrets.token_urlsafe(32)),
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",
-)
+app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "dev")
 CORS(app)
 initialize_database()
 
@@ -261,10 +250,6 @@ def chat():
     if mode not in config.MODES:
         return jsonify({"error": f"Invalid mode: {mode}"}), 400
 
-    user_id = session.get("user_id")
-    if user_id is not None:
-        save_prompt(user_id, session_id, user_message)
-
     result = process_message(user_message, mode, session_id)
     return jsonify(result)
 
@@ -287,62 +272,6 @@ def reset_session():
 def get_settings():
     """Return display settings for all modes (used by frontend CSS)."""
     return jsonify(config.DISPLAY_SETTINGS)
-
-
-def current_user() -> dict | None:
-    """Return the safe account fields stored in the signed session."""
-    user_id = session.get("user_id")
-    if user_id is None:
-        return None
-    return {"id": user_id, "name": session.get("user_name"), "email": session.get("user_email")}
-
-
-@app.route("/api/auth/signup", methods=["POST"])
-def signup():
-    data = request.get_json(silent=True) or {}
-    name, email, password = data.get("name"), data.get("email"), data.get("password")
-    if not all(isinstance(value, str) for value in (name, email, password)):
-        return jsonify({"error": "Name, email, and password must be strings."}), 400
-    try:
-        user = create_user(name, email, password)
-    except ValueError as error:
-        return jsonify({"error": str(error)}), 400
-    session.clear()
-    session.update(user_id=user["id"], user_name=user["name"], user_email=user["email"])
-    return jsonify({"user": user}), 201
-
-
-@app.route("/api/auth/signin", methods=["POST"])
-def signin():
-    data = request.get_json(silent=True) or {}
-    email, password = data.get("email"), data.get("password")
-    if not isinstance(email, str) or not isinstance(password, str):
-        return jsonify({"error": "Email and password must be strings."}), 400
-    user = authenticate_user(email, password)
-    if user is None:
-        return jsonify({"error": "Email or password is incorrect."}), 401
-    session.clear()
-    session.update(user_id=user["id"], user_name=user["name"], user_email=user["email"])
-    return jsonify({"user": user})
-
-
-@app.route("/api/auth/signout", methods=["POST"])
-def signout():
-    session.clear()
-    return jsonify({"status": "signed_out"})
-
-
-@app.route("/api/auth/me", methods=["GET"])
-def account():
-    return jsonify({"user": current_user()})
-
-
-@app.route("/api/history", methods=["GET"])
-def prompt_history():
-    user = current_user()
-    if user is None:
-        return jsonify({"error": "Sign in to view saved prompt history."}), 401
-    return jsonify({"prompts": get_prompts(user["id"])})
 
 
 # ─── Main ───────────────────────────────────────────────────────────────────────

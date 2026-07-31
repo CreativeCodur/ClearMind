@@ -159,7 +159,7 @@
             margin: 0 auto;
         }
 
-        .account-btn {
+        .account-btn-removed {
             background: var(--accent);
             border: 1px solid var(--accent);
             border-radius: 8px;
@@ -839,7 +839,6 @@
             </div>
 
             <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
-            <button class="account-btn" id="accountBtn" type="button">Sign in</button>
         </div>
 
         <!-- Chat -->
@@ -875,41 +874,6 @@
         </div>
     </div>
 
-    <dialog class="auth-dialog" id="authDialog" aria-labelledby="authTitle">
-        <div class="auth-content">
-            <div class="auth-top">
-                <div>
-                    <h2 id="authTitle">Save your prompt history</h2>
-                    <p id="authSubtitle">Sign in to keep prompts across sessions.</p>
-                </div>
-                <button class="dialog-close" id="closeAuthBtn" type="button" aria-label="Close">×</button>
-            </div>
-
-            <div id="authForms">
-                <div class="auth-tabs">
-                    <button class="auth-tab active" data-auth-tab="signin" type="button">Sign in</button>
-                    <button class="auth-tab" data-auth-tab="signup" type="button">Create account</button>
-                </div>
-                <p class="auth-error" id="authError" role="alert"></p>
-                <form class="auth-form" id="signinForm">
-                    <label>Email<input id="signinEmail" type="email" required autocomplete="email"></label>
-                    <label>Password<input id="signinPassword" type="password" required autocomplete="current-password"></label>
-                    <button class="auth-submit" type="submit">Sign in</button>
-                </form>
-                <form class="auth-form" id="signupForm" hidden>
-                    <label>Name<input id="signupName" type="text" required maxlength="100" autocomplete="name"></label>
-                    <label>Email<input id="signupEmail" type="email" required autocomplete="email"></label>
-                    <label>Password<input id="signupPassword" type="password" required minlength="8" autocomplete="new-password"></label>
-                    <button class="auth-submit" type="submit">Create account</button>
-                </form>
-            </div>
-
-            <div class="signed-in-only" id="accountDetails" hidden>
-                <p class="account-details" id="accountDetailsText"></p>
-                <button class="signout-btn" id="signoutBtn" type="button">Sign out</button>
-            </div>
-        </div>
-    </dialog>
 
     <script>
         let currentMode = 'combined';
@@ -925,14 +889,6 @@
         const readabilityEase = document.getElementById('readabilityEase');
         const readabilityPasses = document.getElementById('readabilityPasses');
         const newChatBtn = document.getElementById('newChatBtn');
-        const accountBtn = document.getElementById('accountBtn');
-        const authDialog = document.getElementById('authDialog');
-        const closeAuthBtn = document.getElementById('closeAuthBtn');
-        const authForms = document.getElementById('authForms');
-        const accountDetails = document.getElementById('accountDetails');
-        const accountDetailsText = document.getElementById('accountDetailsText');
-        const authError = document.getElementById('authError');
-        let currentUser = null;
 
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -1065,69 +1021,6 @@
 
             scrollToBottom();
         }
-
-        function setCurrentUser(user) {
-            currentUser = user;
-            accountBtn.textContent = user ? user.name : 'Sign in';
-            authForms.hidden = Boolean(user);
-            accountDetails.hidden = !user;
-            if (user) {
-                accountDetailsText.textContent = user.name + ' · ' + user.email;
-            }
-        }
-
-        function showAuth(mode = 'signin') {
-            authError.textContent = '';
-            document.querySelectorAll('.auth-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.authTab === mode);
-            });
-            document.getElementById('signinForm').hidden = mode !== 'signin';
-            document.getElementById('signupForm').hidden = mode !== 'signup';
-            authDialog.showModal();
-        }
-
-        async function submitAuth(endpoint, data) {
-            authError.textContent = '';
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                authError.textContent = result.error || 'Could not complete that request.';
-                return;
-            }
-            setCurrentUser(result.user);
-            authDialog.close();
-        }
-
-        accountBtn.addEventListener('click', () => showAuth());
-        closeAuthBtn.addEventListener('click', () => authDialog.close());
-        document.querySelectorAll('.auth-tab').forEach(tab => {
-            tab.addEventListener('click', () => showAuth(tab.dataset.authTab));
-        });
-        document.getElementById('signinForm').addEventListener('submit', event => {
-            event.preventDefault();
-            submitAuth('/api/auth/signin', {
-                email: document.getElementById('signinEmail').value,
-                password: document.getElementById('signinPassword').value,
-            });
-        });
-        document.getElementById('signupForm').addEventListener('submit', event => {
-            event.preventDefault();
-            submitAuth('/api/auth/signup', {
-                name: document.getElementById('signupName').value,
-                email: document.getElementById('signupEmail').value,
-                password: document.getElementById('signupPassword').value,
-            });
-        });
-        document.getElementById('signoutBtn').addEventListener('click', async () => {
-            await fetch('/api/auth/signout', { method: 'POST' });
-            setCurrentUser(null);
-            authDialog.close();
-        });
-        fetch('/api/auth/me').then(response => response.json()).then(data => setCurrentUser(data.user));
 
         function updateReadabilityBadge(info) {
             if (!info) return;
