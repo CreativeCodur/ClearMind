@@ -152,11 +152,78 @@
             position: relative;
             z-index: 2;
             display: flex;
-            flex-direction: column;
+            gap: 16px;
             height: 100%;
-            max-width: 860px;
+            max-width: 1120px;
             width: 100%;
             margin: 0 auto;
+            padding: 12px;
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* Conversation history */
+        .history-panel {
+            background: rgba(250, 249, 246, 0.9);
+            border: 1px solid var(--ai-bubble-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex: 0 0 190px;
+            flex-direction: column;
+            margin: 4px 0 8px;
+            overflow: hidden;
+        }
+
+        .history-panel h2 {
+            font-size: 0.78rem;
+            letter-spacing: 0.04em;
+            padding: 16px 14px 10px;
+            text-transform: uppercase;
+        }
+
+        .history-empty {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            padding: 0 14px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 8px;
+            overflow-y: auto;
+            padding: 2px;
+        }
+
+        .history-item {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.78rem;
+            overflow: hidden;
+            padding: 9px 10px;
+            text-align: left;
+            text-overflow: ellipsis;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+            white-space: nowrap;
+        }
+
+        .history-item:hover, .history-item:focus-visible, .history-item.active {
+            background: var(--accent-faint);
+            border-color: var(--user-bubble-border);
+            color: var(--accent);
+            outline: none;
         }
 
         .account-btn-removed {
@@ -714,6 +781,12 @@
 
         /* ─── Responsive ─── */
         @media (max-width: 768px) {
+            .app { padding: 0; }
+
+            .history-panel {
+                display: none;
+            }
+
             .header {
                 padding: 12px 16px 10px;
                 flex-wrap: wrap;
@@ -807,6 +880,13 @@
     <div class="reading-overlay" aria-hidden="true"></div>
 
     <div class="app">
+        <aside class="history-panel" aria-label="Conversation history">
+            <h2>History</h2>
+            <p class="history-empty" id="historyEmpty">Your conversation topics will appear here.</p>
+            <nav class="history-list" id="historyList" aria-label="Past messages"></nav>
+        </aside>
+
+        <div class="main-content">
         <!-- Header -->
         <div class="header">
             <div class="logo">
@@ -872,6 +952,7 @@
                 </button>
             </div>
         </div>
+        </div>
     </div>
 
 
@@ -889,8 +970,20 @@
         const readabilityEase = document.getElementById('readabilityEase');
         const readabilityPasses = document.getElementById('readabilityPasses');
         const newChatBtn = document.getElementById('newChatBtn');
+        const historyList = document.getElementById('historyList');
+        const historyEmpty = document.getElementById('historyEmpty');
 
         let chatStarted = false;
+        let historyCount = 0;
+        const historyStopwords = new Set([
+            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+            'should', 'may', 'might', 'can', 'to', 'of', 'in', 'for', 'on', 'with',
+            'at', 'by', 'from', 'it', 'its', 'this', 'that', 'i', 'you', 'we', 'they',
+            'my', 'your', 'and', 'but', 'or', 'not', 'so', 'if', 'as', 'just', 'about',
+            'what', 'how', 'when', 'where', 'why', 'please', 'help', 'want', 'need',
+            'like', 'really', 'also', 'get', 'got', 'make', 'tell', 'give'
+        ]);
 
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
@@ -917,6 +1010,9 @@
 
             const messages = chatContainer.querySelectorAll('.message');
             messages.forEach(m => m.remove());
+            historyList.replaceChildren();
+            historyEmpty.hidden = false;
+            historyCount = 0;
 
             if (welcome) {
                 welcome.style.display = '';
@@ -939,7 +1035,8 @@
 
             if (welcome) welcome.style.display = 'none';
 
-            addMessage(message, 'user');
+            const userMessage = addMessage(message, 'user');
+            addHistoryItem(message, userMessage);
             userInput.value = '';
             userInput.style.height = 'auto';
 
@@ -984,6 +1081,45 @@
             div.textContent = text;
             chatContainer.insertBefore(div, loading);
             scrollToBottom();
+            return div;
+        }
+
+        function getKeywords(message) {
+            const counts = new Map();
+            const words = message.toLowerCase().match(/[a-z]+/g) || [];
+            words.forEach(word => {
+                if (word.length > 2 && !historyStopwords.has(word)) {
+                    counts.set(word, (counts.get(word) || 0) + 1);
+                }
+            });
+
+            const keywords = [...counts.keys()]
+                .sort((a, b) => (counts.get(b) - counts.get(a)) || (b.length - a.length) || a.localeCompare(b))
+                .slice(0, 2);
+            return keywords.length ? keywords.join(' · ') : 'Message ' + (historyCount + 1);
+        }
+
+        function addHistoryItem(message, messageElement) {
+            historyCount += 1;
+            const topic = getKeywords(message);
+            const item = document.createElement('button');
+            item.className = 'history-item';
+            item.type = 'button';
+            item.textContent = topic;
+            item.title = message;
+            item.setAttribute('aria-label', 'Go to message about ' + topic);
+            messageElement.id = 'message-' + historyCount;
+            messageElement.tabIndex = -1;
+
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.history-item').forEach(button => button.classList.remove('active'));
+                item.classList.add('active');
+                messageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                messageElement.focus({ preventScroll: true });
+            });
+
+            historyList.appendChild(item);
+            historyEmpty.hidden = true;
         }
 
         function addMessageHTML(html, role) {
