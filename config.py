@@ -11,17 +11,13 @@ Design rationale:
 
 # ─── API ────────────────────────────────────────────────────────────────────────
 MODEL = "google/gemini-2.0-flash-exp:free"
-FALLBACK_MODELS = [
-    "google/gemma-3-27b-it:free",
-    "mistralai/mistral-small-3.1-24b-instruct:free",
-    "openrouter/free",
-]
+FALLBACK_MODELS = []  # Disabled — non-Gemini free models produce <unk> token spam
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MAX_TOKENS = 4096
 TEMPERATURE = 0.7
 
 # ─── Modes ──────────────────────────────────────────────────────────────────────
-MODES = ["standard", "dyslexia", "adhd", "combined"]
+MODES = ["dyslexia", "adhd", "combined"]
 DEFAULT_MODE = "combined"
 
 # ─── Readability targets ────────────────────────────────────────────────────────

@@ -39,22 +39,52 @@ def _is_garbage(text: str) -> bool:
 def _sanitize_output(text: str) -> str:
     """Clean model output of thought-process leaks and repetition loops.
 
-    Addresses the bug where models return internal reasoning followed
-    by repeated fragments (e.g., '1? 1? 1? 1?' or 'is it is it is it').
+    Addresses multiple observed failure modes from free-tier models:
+      1. <think>/<thinking> tag leaks
+      2. <unk> token spam (garbage tokens from tokenizer)
+      3. Model re-reading its own system prompt / constraints mid-response
+      4. Line-level and phrase-level repetition loops
 
     Research basis:
       - Benchmarking study (Malhotra, 2026): observed models leaking
-        chain-of-thought tokens and entering repetition loops on
-        free-tier API calls.
+        chain-of-thought tokens, <unk> spam, and entering repetition
+        loops on free-tier API calls.
     """
     import re
 
-    # 1. Strip chain-of-thought / thinking blocks
+    # 1. Strip <unk> tokens — free-tier models emit these as garbage
+    text = text.replace('<unk>', '')
+
+    # 2. Strip chain-of-thought / thinking blocks
     for pattern in THOUGHT_PATTERNS:
         text = re.sub(pattern, '', text, flags=re.DOTALL | re.IGNORECASE)
 
-    # 2. Detect and truncate repetition loops
-    # Split into sentences/fragments and check for excessive repetition
+    # 3. Truncate at meta-reasoning leaks
+    # The model sometimes finishes its answer, then starts re-reading
+    # its constraints or re-deriving the response. Cut at the first sign.
+    meta_patterns = [
+        r"(?:^|\n)\s*Let me re-read",
+        r"(?:^|\n)\s*Let's check the word count",
+        r"(?:^|\n)\s*Constraints:\s*\n",
+        r"(?:^|\n)\s*Let me count",
+        r"(?:^|\n)\s*Wait,?\s+(?:the|I|we|let)",
+        r"(?:^|\n)\s*Now let's (?:check|make sure|verify|structure)",
+        r"(?:^|\n)\s*(?:Hmm|OK|Okay),?\s+(?:so|let|the|I)",
+        r"(?:^|\n)\s*Let me (?:re-?do|re-?write|re-?think|re-?structure|verify)",
+        r"(?:^|\n)\s*\d+\.\s+\"[^\"]+\"\s*\(\d+\s*words?\)",  # word-count checking like: 1. "sentence" (6 words)
+    ]
+    for pat in meta_patterns:
+        match = re.search(pat, text, flags=re.IGNORECASE)
+        if match:
+            text = text[:match.start()]
+            break
+
+    # 4. If the response contains a duplicate TL;DR, keep only up to the second one
+    tldr_positions = [m.start() for m in re.finditer(r'TL;?DR', text, re.IGNORECASE)]
+    if len(tldr_positions) >= 2:
+        text = text[:tldr_positions[1]]
+
+    # 5. Detect and truncate repetition loops
     lines = text.split('\n')
     cleaned_lines = []
     seen_lines = {}
@@ -70,7 +100,6 @@ def _sanitize_output(text: str) -> str:
         if stripped in seen_lines and len(stripped) < 100:
             consecutive_repeats += 1
             if consecutive_repeats >= 3:
-                # Skip — this is a repetition loop
                 continue
         else:
             consecutive_repeats = 0
@@ -80,22 +109,22 @@ def _sanitize_output(text: str) -> str:
 
     text = '\n'.join(cleaned_lines)
 
-    # 3. Catch short-phrase repetition within a single line
-    # e.g., "is it 1? is it 1? is it 1? is it 1?"
+    # 6. Catch short-phrase repetition within a single line
     words = text.split()
     if len(words) > 20:
-        # Check if any 3-word phrase repeats more than 4 times
         for n in (3, 4, 5):
             trigrams = [' '.join(words[i:i+n]) for i in range(len(words) - n + 1)]
             from collections import Counter
             counts = Counter(trigrams)
             for phrase, count in counts.items():
                 if count >= 4:
-                    # Replace all but the first two occurrences
                     parts = text.split(phrase)
                     if len(parts) > 3:
                         text = phrase.join(parts[:3]) + parts[-1]
                     break
+
+    # 7. Clean up leftover whitespace from all the stripping
+    text = re.sub(r'\n{3,}', '\n\n', text)
 
     return text.strip()
 
