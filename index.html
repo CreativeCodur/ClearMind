@@ -356,7 +356,7 @@
             padding: 10px 16px 8px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            flex-wrap: wrap;
             flex-shrink: 0;
             gap: 8px;
         }
@@ -846,6 +846,13 @@
             color: var(--accent);
         }
 
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
         /* ─── Mode-specific overrides ─── */
 
         /* Dyslexia & Combined: OpenDyslexic, spacing, larger text */
@@ -1008,26 +1015,27 @@
                 <button class="mode-btn active" data-mode="combined">Combined</button>
             </div>
 
-            <div class="readability-badge" id="readabilityBadge">
-                <span class="readability-dot" id="readabilityDot"></span>
-                <span class="readability-metric" tabindex="0" aria-describedby="gradeTooltip">
-                    Grade <span id="readabilityGrade"></span>
-                    <span class="readability-tooltip" id="gradeTooltip" role="tooltip">
-                        Flesch–Kincaid Grade Level estimates the U.S. school grade needed to understand the text. Lower scores mean easier text.
+            <div class="header-right">
+                <div class="readability-badge" id="readabilityBadge">
+                    <span class="readability-dot" id="readabilityDot"></span>
+                    <span class="readability-metric" tabindex="0" aria-describedby="gradeTooltip">
+                        Grade <span id="readabilityGrade"></span>
+                        <span class="readability-tooltip" id="gradeTooltip" role="tooltip">
+                            Flesch–Kincaid Grade Level estimates the U.S. school grade needed to understand the text. Lower scores mean easier text.
+                        </span>
                     </span>
-                </span>
-                <span aria-hidden="true">·</span>
-                <span class="readability-metric" tabindex="0" aria-describedby="easeTooltip">
-                    Ease <span id="readabilityEase"></span>
-                    <span class="readability-tooltip" id="easeTooltip" role="tooltip">
-                        Flesch Reading Ease scores text from 0 to 100. Higher scores mean easier text.
+                    <span aria-hidden="true">·</span>
+                    <span class="readability-metric" tabindex="0" aria-describedby="easeTooltip">
+                        Ease <span id="readabilityEase"></span>
+                        <span class="readability-tooltip" id="easeTooltip" role="tooltip">
+                            Flesch Reading Ease scores text from 0 to 100. Higher scores mean easier text.
+                        </span>
                     </span>
-                </span>
-                <span id="readabilityPasses"></span>
+                    <span id="readabilityPasses"></span>
+                </div>
+                <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">&#9790;</button>
+                <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
             </div>
-
-            <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">&#9790;</button>
-            <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
         </div>
 
         <!-- Chat -->
@@ -1274,7 +1282,11 @@
                 date.textContent = new Date(conversation.savedAt).toLocaleDateString();
                 item.appendChild(date);
 
+                let isEditing = false;
+
                 item.addEventListener('click', () => {
+                    if (isEditing) return;
+                    if (currentConvId === conversation.id) return;
                     selectedConversationId = conversation.id;
                     restoreConversation(conversation);
                     currentConvId = conversation.id;
@@ -1283,6 +1295,7 @@
 
                 label.addEventListener('dblclick', (e) => {
                     e.stopPropagation();
+                    isEditing = true;
                     label.contentEditable = 'true';
                     label.focus();
                     const range = document.createRange();
@@ -1293,6 +1306,8 @@
                 });
 
                 function finishRename() {
+                    if (!isEditing) return;
+                    isEditing = false;
                     label.contentEditable = 'false';
                     const newName = label.textContent.trim();
                     const all = savedConversations();
@@ -1300,6 +1315,7 @@
                     if (found) {
                         found.label = newName;
                         localStorage.setItem(conversationsStorageKey, JSON.stringify(all));
+                        conversation.label = newName;
                     }
                 }
 
