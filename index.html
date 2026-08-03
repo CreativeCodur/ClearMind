@@ -302,6 +302,11 @@
         .conversation-item { white-space: normal; }
         .conversation-date { color: var(--text-secondary); display: block; font-size: 0.66rem; font-weight: 400; margin-top: 3px; }
 
+        .conversation-item .conv-label { display: block; overflow: hidden; text-overflow: ellipsis; }
+        .conversation-item .conv-label:empty::before { content: 'Untitled'; color: var(--text-secondary); font-style: italic; }
+        .conversation-item .conv-label[contenteditable] { outline: none; border-bottom: 1px solid var(--accent); cursor: text; white-space: nowrap; }
+        .conversation-item.active-conv { background: var(--accent-faint); border-color: var(--user-bubble-border); }
+
         .account-btn-removed {
             background: var(--accent);
             border: 1px solid var(--accent);
@@ -348,12 +353,12 @@
 
         /* Header */
         .header {
-            padding: 16px 24px 12px;
+            padding: 10px 16px 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-shrink: 0;
-            gap: 12px;
+            gap: 8px;
         }
 
         .logo {
@@ -363,20 +368,20 @@
         }
 
         .logo img {
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             object-fit: contain;
         }
 
         .logo-clear {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--accent);
             letter-spacing: -0.02em;
         }
 
         .logo-mind {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             font-weight: 300;
             color: var(--text);
             letter-spacing: -0.02em;
@@ -492,7 +497,7 @@
         .chat-container {
             flex: 1;
             overflow-y: scroll;
-            padding: 8px 24px 24px;
+            padding: 6px 16px 16px;
             display: flex;
             flex-direction: column;
             gap: 16px;
@@ -731,7 +736,7 @@
         /* Input area */
         .input-area {
             flex-shrink: 0;
-            padding: 12px 24px 20px;
+            padding: 8px 16px 12px;
         }
 
         .input-row {
@@ -1122,12 +1127,15 @@
             });
         });
 
+        let currentConvId = null;
+
         // New chat
         newChatBtn.addEventListener('click', async () => {
             if (chatStarted === false) return;
             saveCurrentConversation();
 
             sessionId = 'session-' + Date.now();
+            currentConvId = null;
 
             const messages = chatContainer.querySelectorAll('.message');
             messages.forEach(m => m.remove());
@@ -1143,6 +1151,7 @@
 
             readabilityBadge.classList.remove('visible');
             chatStarted = false;
+            renderSavedConversations();
         });
 
         // Auto-resize textarea
@@ -1196,6 +1205,8 @@
             }
 
             chatStarted = true;
+            saveCurrentConversation();
+            renderSavedConversations();
         }
 
         function addMessage(text, role) {
@@ -1234,13 +1245,13 @@
                 role: message.classList.contains('user') ? 'user' : 'ai',
                 content: message.classList.contains('user') ? message.textContent : message.innerHTML,
             }));
-            const prompts = historyEntries.map(entry => entry.item.title);
-            const label = getKeywords(prompts.join(' '));
-            const snapshot = { id: sessionId, label, prompts, messages, savedAt: Date.now() };
-            const updated = savedConversations().filter(conversation => conversation.id !== sessionId);
+            const existing = savedConversations().find(c => c.id === sessionId);
+            const label = existing ? existing.label : '';
+            const snapshot = { id: sessionId, label, messages, savedAt: Date.now() };
+            const updated = savedConversations().filter(c => c.id !== sessionId);
             updated.unshift(snapshot);
             localStorage.setItem(conversationsStorageKey, JSON.stringify(updated));
-            renderSavedConversations();
+            currentConvId = sessionId;
         }
 
         function renderSavedConversations() {
@@ -1248,19 +1259,56 @@
             conversationsList.replaceChildren();
             conversationsEmpty.hidden = conversations.length > 0;
             conversations.forEach(conversation => {
-                const item = document.createElement('button');
+                const item = document.createElement('div');
                 item.className = 'history-item conversation-item';
-                item.type = 'button';
                 item.draggable = true;
-                item.textContent = conversation.label;
+                if (conversation.id === currentConvId) item.classList.add('active-conv');
+
+                const label = document.createElement('span');
+                label.className = 'conv-label';
+                label.textContent = conversation.label || '';
+                item.appendChild(label);
+
                 const date = document.createElement('span');
                 date.className = 'conversation-date';
                 date.textContent = new Date(conversation.savedAt).toLocaleDateString();
                 item.appendChild(date);
+
                 item.addEventListener('click', () => {
                     selectedConversationId = conversation.id;
                     restoreConversation(conversation);
+                    currentConvId = conversation.id;
+                    renderSavedConversations();
                 });
+
+                label.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    label.contentEditable = 'true';
+                    label.focus();
+                    const range = document.createRange();
+                    range.selectNodeContents(label);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                });
+
+                function finishRename() {
+                    label.contentEditable = 'false';
+                    const newName = label.textContent.trim();
+                    const all = savedConversations();
+                    const found = all.find(c => c.id === conversation.id);
+                    if (found) {
+                        found.label = newName;
+                        localStorage.setItem(conversationsStorageKey, JSON.stringify(all));
+                    }
+                }
+
+                label.addEventListener('blur', finishRename);
+                label.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); label.blur(); }
+                    if (e.key === 'Escape') { label.textContent = conversation.label || ''; label.blur(); }
+                });
+
                 item.addEventListener('dragstart', (event) => {
                     item.classList.add('dragging');
                     event.dataTransfer.effectAllowed = 'move';
@@ -1436,6 +1484,8 @@
                 sendMessage();
             }
         });
+
+        renderSavedConversations();
     </script>
 </body>
 </html>
