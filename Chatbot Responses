@@ -2,7 +2,7 @@
 
 **Paper:** Evaluating AI Chatbot Accessibility for Users with ADHD and Dyslexia: A Design and Evaluation Framework
 
-**Authors:** Hargun Malhotra, Samia Saeed, John Riley, Ella Lewis, Anusha Saha, Tin Nguyen
+**Authors:** Hargun Malhotra, Samia Saeed, John Riley, Ella Lewis, Tin Nguyen
 
 **Conference:** MIT URTC 2026
 
@@ -11,7 +11,7 @@
 This document contains the full set of 15 test prompts and all chatbot responses used in the evaluation. Prompts are organized into seven categories as described in Section II-C of the paper. Dimensions scored for each prompt are listed in parentheses.
 
 **Chatbots evaluated:**
-- ChatGPT (GPT-4o mini)
+- ChatGPT (GPT-5.5 Instant Mini)
 - Claude (Haiku 4.5)
 - Gemini (3.5 Flash-Lite)
 - DeepSeek (V3)
@@ -26,7 +26,7 @@ This document contains the full set of 15 test prompts and all chatbot responses
 
 **Prompt:** "Explain how photosynthesis works."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
 Photosynthesis is the biochemical process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in glucose, using carbon dioxide and water. This process is vital for life on Earth, as it produces oxygen as a byproduct and serves as the foundation for the food chain. Here's a detailed breakdown of how photosynthesis works:
 
@@ -197,7 +197,7 @@ Sunlight hits green pigment in leaf cells. It splits water into oxygen, protons,
 
 **Prompt:** "waht si teh diffrence btwn a virus adn a bactiria? i ned a simpl anser"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
 Sure! Here's a simple comparison between viruses and bacteria:
 
@@ -284,7 +284,7 @@ A virus (tiny germ) cannot grow alone. It must enter a living cell to make more.
 
 **Prompt:** "explane how to make a bugdet for sumone who dosent no were there muney goes"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
 Creating a budget for someone who doesn't know where their money goes can be a straightforward process if broken down into simple steps. Here's a guide you can follow:
 
@@ -376,7 +376,7 @@ Keep this budget and adjust when new expenses appear.
 
 **Prompt:** "I have ADHD and long text is really hard for me. Can you explain how the stock market works in a way that's easy for me to focus on?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
 What is the Stock Market? A Marketplace: It's a place where people buy and sell stocks (shares) of companies.
 
@@ -459,21 +459,30 @@ The stock market is a place where people buy and sell company shares. Shares are
 
 **Prompt:** "I have dyslexia and reading is slow for me. Can you explain what climate change is using really simple words and short sentences?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-What is Climate Change? Earth's Temperature: The Earth is getting warmer over time.
+Of course. I'll use short sentences and simple words.
 
-Greenhouse Gases: Gases, like carbon dioxide, trap heat in the air.
+Climate change means the Earth is getting warmer and its weather is changing. The Earth has a layer of gases around it. This layer is called the atmosphere. Some gases trap heat from the Sun. This keeps Earth warm enough for life. But humans are adding too many heat-trapping gases.
 
-Why It Happens: People burn fossil fuels for energy. This releases more greenhouse gases.
+These gases come from things like:
+- Cars
+- Factories
+- Burning coal, oil, and gas
+- Cutting down forests
 
-Effects: Ice melts in the Arctic. Sea levels rise. Weather changes (more storms, droughts).
+The extra gases make Earth hold more heat. This causes problems like:
+- Hotter days
+- Stronger storms
+- Melting ice
+- Rising sea levels
+- Changes in rain and snow
 
-Impact on Nature: Some animals and plants can't adapt.
+Climate change does not mean every day is hot. It means the average temperature and weather patterns are changing over a long time.
 
-Impact on People: Food and water can become scarce. More extreme weather can cause damage.
+A simple way to think about it: Earth is like a person wearing a blanket. A thin blanket keeps you comfortable. A very thick blanket makes you too hot. Extra greenhouse gases are like adding more blankets to Earth.
 
-What Can We Do? Use Less Energy. Use Renewable Energy. Plant Trees. Reduce Waste.
+The main idea: Humans are adding extra heat-trapping gases, which is making Earth warmer and changing the climate.
 
 #### Claude (Haiku 4.5)
 
@@ -538,18 +547,22 @@ The planet is warming because gases like CO₂ stay in the air. These gases trap
 
 **Prompt:** "I have both ADHD and dyslexia. How should I study for an exam?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-- Create a Study Schedule: Break sessions into smaller chunks with set times.
-- Use Visual Aids: Diagrams, charts, and color-coded notes.
-- Limit Distractions: Find a quiet study spot.
-- Break Tasks into Steps: Focus on one topic at a time.
-- Practice with Active Learning: Flashcards, quizzes, teaching the material.
-- Use Technology: Text-to-speech software or audiobooks.
-- Take Regular Breaks: Short breaks between sessions.
-- Stay Organized: Keep materials in one place.
-- Use Mnemonics: Create acronyms or memorable phrases.
-- Stay Positive: Celebrate small achievements.
+- Break studying into small chunks: Study for 20-30 minutes. Take a 5-minute break.
+- Start with the hardest topic: Your brain has the most energy early.
+- Use active studying: Do practice questions. Explain ideas out loud. Make flashcards.
+- Make notes easier to read: Use bullet points. Use headings. Highlight only key ideas.
+- Reduce distractions: Put your phone away. Use a quiet space. Keep only needed materials out.
+- Study with movement: Walk while reviewing. Stand up during breaks.
+- Review often: Study a little each day instead of cramming.
+
+Simple plan:
+1. Pick one topic.
+2. Study 25 minutes.
+3. Take a 5-minute break.
+4. Test yourself.
+5. Repeat.
 
 #### Claude (Haiku 4.5)
 
@@ -612,9 +625,9 @@ Short frequent study sessions help you stay focused. Use clear, simple notes. Av
 
 **Prompt:** "In 2 sentences max, what is machine learning?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-Machine learning is a branch of artificial intelligence that allows computers to learn from data and improve their performance on tasks without being explicitly programmed. It involves using algorithms to identify patterns and make predictions based on the input data.
+Machine learning is when computers learn from examples and data instead of being directly programmed for every task. It helps computers find patterns and make predictions or decisions.
 
 #### Claude (Haiku 4.5)
 
@@ -644,23 +657,23 @@ The computer uses patterns to predict or decide on new data.
 
 **Prompt:** "Walk me through setting up a personal budget. I've never done this before and I get overwhelmed easily."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-Step 1: Gather Your Financial Information — List your income and expenses. Break expenses into Fixed and Variable categories.
+We'll make it simple. A budget is just a plan for where your money goes. You do not need to make it perfect.
 
-Step 2: Create a Budget Template — Use a notebook, spreadsheet, or budgeting apps.
+Step 1: Find out how much money you have. Write down your money coming in each month. Example: Allowance: $50, Job income: $200, Other money: $20. Total monthly income: $270.
 
-Step 3: Calculate the Difference — Total Income - Total Expenses = Remaining Balance.
+Step 2: Write your regular costs. These are things you usually pay for. Examples: Phone bill, Transportation, Subscriptions, School costs, Food/snacks. If you pay none of these, write $0. That is okay.
 
-Step 4: Make Adjustments — If surplus, save or invest. If deficit, cut back.
+Step 3: Track your spending. For one week, write down everything you buy. Example: Snack: $3, Game: $10, Coffee: $5. Do not judge yourself. You are just collecting information.
 
-Step 5: Set Goals — Short-term and long-term financial goals.
+Step 4: Split your money into categories. Needs: things you must pay for. Wants: fun things. Savings: money you keep for later. Example with $270: Needs: $70, Wants: $100, Savings: $100.
 
-Step 6: Track Your Spending — Manually or with a budgeting app.
+Step 5: Pick one savings goal. Make it specific. Instead of: "I want to save money." Try: "I want to save $100 for a new laptop."
 
-Step 7: Review Monthly — Did you stick to your budget? Need changes?
+Step 6: Check once a week. Spend 5 minutes asking: How much did I spend? Am I close to my goal? Do I need to adjust? That's it.
 
-Step 8: Stay Flexible — Budgeting is a learning process.
+Your first budget does not need to be perfect. The goal is just to understand your money better. A good action right now: Open a note and write: Money I get each month, Things I pay for, Things I spend on for fun, My savings goal. Then fill in whatever you know.
 
 #### Claude (Haiku 4.5)
 
@@ -734,7 +747,7 @@ A budget shows where your money goes and helps you stay in control. Budget = inc
 
 **Prompt:** "Explain blockchain to me like I'm 12."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
 Think of blockchain as a digital notebook that everyone can see and write in, but no one can erase what's already been written.
 
@@ -799,9 +812,11 @@ A blockchain is a list of records that many computers share. Each block holds tr
 
 **Prompt:** "What year did World War 2 end?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-World War II ended in 1945. In Europe, the war officially concluded on May 8, 1945, known as Victory in Europe (VE) Day. In the Pacific, the war ended on September 2, 1945, when Japan officially surrendered, marking the end of the conflict worldwide.
+- World War II ended in 1945.
+- Germany surrendered in May 1945.
+- Japan surrendered in September 1945.
 
 #### Claude (Haiku 4.5)
 
@@ -837,25 +852,24 @@ World War II finished in 1945 when Germany surrendered on May 8, 1945, and Japan
 
 **Prompt:** "I need to write a 10-page research paper but I can't even start. What do I do first?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-Step 1: Choose a Topic — Find a subject that interests you or fits your assignment.
+Start small. Do not try to write 10 pages at once.
 
-Step 2: Research and Gather Information — Use credible sources. Take notes on key points.
+Do this first:
+1. Write your research question. Example: "How does AI affect the future of healthcare?"
+2. Make a simple outline. A 10-page paper could look like: Page 1: Introduction (what is the topic and why it matters?), Pages 2-3: Background information (what do we already know?), Pages 4-7: Main arguments/evidence (your research findings), Pages 8-9: Analysis (what does the evidence mean?), Page 10: Conclusion (what did you learn?)
+3. Find 3-5 good sources first. Read summaries, take notes, and write down useful facts.
+4. Write a messy first paragraph. It does not need to be good. The goal is just to begin.
 
-Step 3: Create an Outline — Introduction, Body Sections, Conclusion.
+A good first step you can do right now:
+Open a blank document and write:
+- My topic is:
+- My research question is:
+- My main points might be:
+- Sources I found:
 
-Step 4: Write a Thesis Statement — Clear and concise.
-
-Step 5: Start Writing — Begin with the introduction. Don't worry about making it perfect.
-
-Step 6: Revise and Edit.
-
-Step 7: Cite Your Sources.
-
-Step 8: Get Feedback.
-
-Step 9: Finalize.
+Once those few lines exist, the paper becomes much easier.
 
 #### Claude (Haiku 4.5)
 
@@ -916,9 +930,14 @@ TL;DR: Choose a topic.
 
 **Turn 1 Prompt:** "I have ADHD. Please keep all your responses short and use bullet points."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-[Responded with a full budget guide in bullet points, not acknowledging the meta-request to change all future responses]
+Got it — I'll keep responses:
+- Short
+- In bullet points
+- Easy to scan
+
+I'll avoid long paragraphs unless you ask for more detail.
 
 #### Claude (Haiku 4.5)
 
@@ -948,13 +967,22 @@ TL;DR: I'll keep answers short and use bullet points.
 
 **Turn 2 Prompt:** "OK thanks. What's the difference between a debit card and a credit card?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-Debit Card: Funds directly linked to bank account. Uses your own money. No debt, no interest. Does not impact credit score.
+Debit card:
+- Uses your own money from your bank account.
+- Money leaves your account when you buy something.
+- You usually cannot spend more than you have.
+- Example: You have $100 in your account — buy $20 — you have $80 left.
 
-Credit Card: Allows borrowing from a credit limit. Monthly bill with possible interest charges. Can impact credit score.
+Credit card:
+- Uses borrowed money from a bank.
+- You pay the bank back later.
+- If you do not pay it back on time, you may pay extra fees and interest.
 
-Summary: Debit = your money. Credit = borrowed money.
+Simple way to remember:
+- Debit = your money now
+- Credit = borrowed money you repay later
 
 #### Claude (Haiku 4.5)
 
@@ -997,13 +1025,31 @@ Debit card takes money from your bank balance right away. You can only spend wha
 
 **Turn 3 Prompt:** "Now explain how interest rates work."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-What is an Interest Rate? The percentage charged on the total loan amount or earned on savings. Types: Fixed Rate (stays the same) vs. Variable Rate (can change).
+Interest is the cost of borrowing money or the reward for saving money.
 
-How Interest Works: Borrowing — lenders charge interest as a fee. Example: $1,000 at 5% = pay back $1,050. Saving — banks pay interest as a reward. Example: $1,000 at 2% = earn $20.
+When you borrow money:
+- You pay extra money called interest.
+- Example: Borrow $100 with 5% interest — pay back about $105.
 
-Key Terms: Principal, APR, Compounding.
+When you save money:
+- A bank may pay you interest.
+- Example: Save $100 with 5% interest — you earn about $5.
+
+Interest rate = the percentage charged or earned.
+
+Higher interest rates:
+- Borrowing becomes more expensive.
+- Saving earns more.
+
+Lower interest rates:
+- Borrowing becomes cheaper.
+- Saving earns less.
+
+Simple way to remember:
+- Loan interest = money you pay
+- Savings interest = money you earn
 
 #### Claude (Haiku 4.5)
 
@@ -1059,15 +1105,21 @@ Interest is the extra money you pay or earn when borrowing or lending money. Rat
 
 **Turn 1 Prompt:** "Explain what a mortgage is."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-What is a Mortgage? A loan specifically for purchasing real estate. Secured Loan — property serves as collateral.
+A mortgage is a loan used to buy a house. The bank gives you money to buy the home. You pay the bank back over many years. Your payments usually include:
+- The loan amount (money you borrowed)
+- Interest (the cost of borrowing)
 
-Key Components: Principal, Interest Rate, Term (15 to 30 years).
+Example:
+- House price: $300,000
+- You pay $60,000 upfront (down payment)
+- Bank loans you: $240,000
+- You repay the $240,000 + interest over time
 
-Types: Fixed-Rate Mortgage vs. Adjustable-Rate Mortgage.
+If you stop paying, the bank can take the house (foreclosure).
 
-Monthly Payments typically include Principal, Interest, Property Taxes, Homeowners Insurance.
+Simple way to remember: A mortgage is a long-term loan to buy a home.
 
 #### Claude (Haiku 4.5)
 
@@ -1123,13 +1175,9 @@ A mortgage (loan that lets you buy property) gives you money to purchase a home.
 
 **Turn 2 Prompt:** "That was way too long. I told you I need short answers. Can you just give me the simple version?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-Mortgage: A loan used to buy real estate. It's secured by the property, meaning the lender can take the home if payments are not made.
-
-Key Points: Principal (Amount borrowed), Interest (Cost of the loan), Term (Length of the loan, usually 15-30 years).
-
-Monthly payments cover principal, interest, taxes, and insurance.
+A mortgage is a loan to buy a house. A bank gives you money, and you pay it back over many years. You pay back the loan plus interest. If you stop paying, the bank can take the house.
 
 #### Claude (Haiku 4.5)
 
@@ -1182,17 +1230,23 @@ A mortgage lets you borrow money to buy a house. You repay the loan plus interes
 
 **Prompt:** "What specific things can you do to make our conversation easier for someone with dyslexia?"
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-To make our conversation easier for someone with dyslexia, I can:
-- Use Clear and Simple Language
-- Break Information into Short Sentences
-- Use Bullet Points or Lists
-- Highlight Key Points
-- Avoid Overly Long Responses
-- Use Text Formatting (bold or italicize important terms)
-- Provide Examples
-- Be Patient (offer to repeat or rephrase)
+- Use short sentences.
+- Use bullet points instead of long paragraphs.
+- Put important words in bold.
+- Avoid unnecessary details.
+- Use simple words when possible.
+- Give examples to explain ideas.
+- Use clear headings.
+- Summarize the main point at the end.
+- Avoid too many numbers or complicated lists at once.
+- Explain difficult words only if you ask.
+
+I can also:
+- Add extra spacing between ideas.
+- Give a "quick version" first and details only if you ask.
+- Explain difficult words when they appear.
 
 #### Claude (Haiku 4.5)
 
@@ -1258,17 +1312,16 @@ I use simple words. I keep sentences short. Here are the steps I will take:
 
 **Prompt:** "I'm trying to understand how the water cycle works but reading about it is really hard for me."
 
-#### ChatGPT (GPT-4o mini)
+#### ChatGPT (GPT-5.5 Instant Mini)
 
-The Water Cycle:
+The water cycle is how water moves around Earth.
 
-1. Evaporation: Water from rivers, lakes, and oceans heats up from the sun and turns into vapor.
-2. Condensation: Water vapor cools and turns back into tiny water droplets, forming clouds.
-3. Precipitation: Clouds release water as rain, snow, or hail.
-4. Collection: Water collects in rivers, lakes, and oceans. Some soaks into the ground.
-5. Runoff: Water moves over the ground, flowing back into oceans and lakes.
+1. Evaporation: The Sun heats water. Water turns into vapor and goes into the air.
+2. Condensation: Water vapor cools. It forms clouds.
+3. Precipitation: Water falls from clouds. It can be rain, snow, or hail.
+4. Collection: Water gathers in oceans, lakes, and rivers. The cycle starts again.
 
-Visual Aid: A diagram of the water cycle can help. You can look for a simple image online.
+Simple idea: Sun heats water → clouds form → rain falls → water collects → repeat.
 
 #### Claude (Haiku 4.5)
 
