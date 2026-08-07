@@ -89,6 +89,7 @@ def extract_tldr(text: str) -> tuple:
 
     if prefix_match:
         remainder = prefix_match.group(1).strip()
+        remainder = re.sub(r'^(?:TL;?DR|TLDR)\s*[:\-]?\s*', '', remainder, flags=re.IGNORECASE).strip()
 
         # If there is an explicit paragraph break, separate TL;DR from body.
         if '\n\n' in remainder:

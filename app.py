@@ -4,7 +4,7 @@ Main application server that orchestrates the full adaptive pipeline:
 
   User message
     -> Mode-specific system prompt (prompts.py)
-    -> Gemini API call (gemini_client.py)
+    -> API call (gpt_client.py or claude_client.py)
     -> Readability check + iterative simplification (readability.py)
     -> Topic drift detection (refocus.py, ADHD/combined only)
     -> Response formatting with TL;DR + chunking (formatter.py)
@@ -35,7 +35,8 @@ from readability import (
 )
 from refocus import DriftDetector
 from formatter import format_response, strip_format_markers, to_html
-from gemini_client import GeminiClient
+from gpt_client import GPTClient
+from claude_client import ClaudeClient
 
 # ─── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -45,13 +46,17 @@ logger = logging.getLogger("clearmind")
 app = Flask(__name__, static_folder="static")
 CORS(app)
 
-# Initialize Gemini client (will fail fast if no API key)
+# Initialize API client based on config toggle
 try:
-    gemini = GeminiClient()
-    logger.info("Gemini client initialized successfully.")
+    if config.API_PROVIDER == "claude":
+        client = ClaudeClient()
+        logger.info("Claude client initialized successfully.")
+    else:
+        client = GPTClient()
+        logger.info("GPT client initialized successfully.")
 except ValueError as e:
-    logger.warning(f"Gemini client not initialized: {e}")
-    gemini = None
+    logger.warning(f"API client not initialized: {e}")
+    client = None
 
 # Per-session drift detectors (keyed by session ID)
 drift_detectors = {}
@@ -73,7 +78,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     Returns:
         Dict with 'html', 'readability', 'drift', and 'raw' keys.
     """
-    if gemini is None:
+    if client is None:
         return {
             "html": '<div class="clearmind-chunk">Error: No API key configured. '
                     'Set GEMINI_API_KEY in your .env file.</div>',
@@ -88,10 +93,10 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     # --- Step 2: Get conversation history ---
     history = conversations.get(session_id, [])
 
-    # --- Step 3: Call Gemini ---
-    logger.info(f"[{session_id}] Mode={mode}, sending to Gemini...")
+    # --- Step 3: Call API ---
+    logger.info(f"[{session_id}] Mode={mode}, sending to API...")
     try:
-        raw_response = gemini.generate(
+        raw_response = client.generate(
             user_message=user_message,
             system_prompt=system_prompt,
             conversation_history=history[-10:],
@@ -127,7 +132,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
         )
         simplify_prompt = build_simplify_prompt(current_text, report, mode)
         try:
-            current_text = gemini.simplify(current_text, simplify_prompt)
+            current_text = client.simplify(current_text, simplify_prompt)
         except RuntimeError:
             logger.warning(f"[{session_id}] Simplification pass {pass_num} failed, using best effort")
             break

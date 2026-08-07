@@ -10,9 +10,17 @@ Design rationale:
 """
 
 # ─── API ────────────────────────────────────────────────────────────────────────
+# Toggle: "claude" or "openrouter"
+API_PROVIDER = "claude"
+
+# OpenRouter (GPT-OSS-20B) settings
 MODEL = "openai/gpt-oss-20b"
-FALLBACK_MODELS = []  # Disabled — non-Gemini free models produce <unk> token spam
+FALLBACK_MODELS = []
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# Claude settings
+CLAUDE_MODEL = "claude-haiku-4-5-20251001"
+
 MAX_TOKENS = 4096
 TEMPERATURE = 0.7
 
@@ -60,11 +68,11 @@ TLDR_ENABLED = {
 
 # ─── Refocus / drift detection (ADHD) ───────────────────────────────────────────
 # Cosine similarity threshold: below this = user has drifted off-topic
-DRIFT_THRESHOLD = 0.15
+DRIFT_THRESHOLD = 0.5
 # Number of recent messages to consider as the "topic window"
 TOPIC_WINDOW = 5
 # Minimum messages before drift detection activates
-MIN_MESSAGES_FOR_DRIFT = 3
+MIN_MESSAGES_FOR_DRIFT = 1
 
 # ─── Frontend display (CSS values) ──────────────────────────────────────────────
 # Based on Rello & Baeza-Yates (2017) and Goodman et al. (2022)

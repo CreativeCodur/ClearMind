@@ -129,8 +129,8 @@ def _sanitize_output(text: str) -> str:
     return text.strip()
 
 
-class GeminiClient:
-    """OpenRouter API wrapper for ClearMind (keeps class name for compatibility)."""
+class GPTClient:
+    """OpenRouter API wrapper for ClearMind (GPT-OSS-20B via OpenRouter)."""
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")

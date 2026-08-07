@@ -47,12 +47,16 @@ TOPIC_STOPWORDS = {
     'not', 'no', 'so', 'if', 'as', 'just', 'about', 'what', 'how', 'when',
     'where', 'why', 'which', 'who', 'whom', 'please', 'help', 'want',
     'need', 'like', 'really', 'also', 'get', 'got', 'make', 'tell', 'give',
+    'talk', 'know', 'think', 'say', 'said', 'thing', 'things', 'gonna',
+    'wanna', 'something', 'anything', 'everything', 'nothing', 'let',
+    'go', 'going', 'come', 'take', 'look', 'see', 'keep', 'put', 'use',
 }
 
 
 def tokenize(text: str) -> List[str]:
-    """Lowercase and extract alphabetic tokens."""
-    return re.findall(r'[a-z]+', text.lower())
+    """Lowercase, extract alphabetic tokens, and remove stopwords."""
+    raw = re.findall(r'[a-z]+', text.lower())
+    return [w for w in raw if w not in TOPIC_STOPWORDS and len(w) > 1]
 
 
 def compute_tf(tokens: List[str]) -> Dict[str, float]:
@@ -155,8 +159,8 @@ class DriftDetector:
         """
         n = len(self.messages)
 
-        # Not enough messages to detect drift
-        if n < config.MIN_MESSAGES_FOR_DRIFT:
+        # Need at least MIN_MESSAGES_FOR_DRIFT prior messages + the new one
+        if n < config.MIN_MESSAGES_FOR_DRIFT + 1:
             return DriftResult(is_drifting=False, similarity=1.0)
 
         # Build the "topic window" = recent messages BEFORE the latest one

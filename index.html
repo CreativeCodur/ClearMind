@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClearMind</title>
-    <link rel="icon" type="image/png" href="/static/owl-logo.png">
+    <link rel="icon" type="image/png" href="/static/logo.png">
 
     <style>
         @font-face {
@@ -101,7 +101,7 @@
         body.dark .readability-tooltip { background: #2a2c30; border-color: #3a3c40; }
         body.dark .clearmind-drift-notice { color: #c4b870; }
         body.dark .clearmind-collapse-toggle { background: var(--bg-secondary); border-color: var(--input-border); }
-        body.dark .logo img { filter: invert(0.85) sepia(0.1) hue-rotate(60deg); }
+        body.dark .logo img { filter: none; }
 
         html, body {
             height: 100%;
@@ -541,11 +541,11 @@
         }
 
         .welcome-icon {
-            width: 56px;
-            height: 56px;
+            width: 80px;
+            height: 80px;
             margin: 0 auto 16px;
             border-radius: 16px;
-            background: var(--accent-faint);
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1028,7 +1028,7 @@
         <!-- Header -->
         <div class="header">
             <div class="logo">
-                <img src="/static/owl-logo.png" alt="ClearMind owl logo">
+                <img src="/static/logo.png" alt="ClearMind owl logo">
                 <span class="logo-clear">Clear</span><span class="logo-mind">Mind</span>
             </div>
 
@@ -1065,7 +1065,7 @@
         <div class="chat-container" id="chatContainer">
             <div class="welcome" id="welcome">
                 <div class="welcome-icon">
-                    <img src="/static/owl-logo.png" alt="ClearMind owl" width="40" height="40" style="object-fit: contain;">
+                    <img src="/static/logo.png" alt="ClearMind" width="72" height="72" style="object-fit: contain;">
                 </div>
                 <h2>Welcome to ClearMind</h2>
                 <p>An AI chat that adapts to how you think. Pick your mode above and start a conversation.</p>
