@@ -81,7 +81,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     if client is None:
         return {
             "html": '<div class="clearmind-chunk">Error: No API key configured. '
-                    'Set GEMINI_API_KEY in your .env file.</div>',
+                    'Set ANTHROPIC_API_KEY in your environment.</div>',
             "readability": None,
             "drift": None,
             "raw": "",
