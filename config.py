@@ -10,16 +10,9 @@ Design rationale:
 """
 
 # ─── API ────────────────────────────────────────────────────────────────────────
-# Toggle: "claude" or "openrouter"
-API_PROVIDER = "claude"
-
-# OpenRouter (GPT-OSS-20B) settings
 MODEL = "openai/gpt-oss-20b"
 FALLBACK_MODELS = []
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-
-# Claude settings
-CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 
 MAX_TOKENS = 4096
 TEMPERATURE = 0.7

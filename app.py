@@ -36,7 +36,6 @@ from readability import (
 from refocus import DriftDetector
 from formatter import format_response, strip_format_markers, to_html
 from gpt_client import GPTClient
-from claude_client import ClaudeClient
 
 # ─── Setup ──────────────────────────────────────────────────────────────────────
 
@@ -46,14 +45,10 @@ logger = logging.getLogger("clearmind")
 app = Flask(__name__, static_folder="static")
 CORS(app)
 
-# Initialize API client based on config toggle
+# Initialize API client
 try:
-    if config.API_PROVIDER == "claude":
-        client = ClaudeClient()
-        logger.info("Claude client initialized successfully.")
-    else:
-        client = GPTClient()
-        logger.info("GPT client initialized successfully.")
+    client = GPTClient()
+    logger.info("API client initialized successfully.")
 except ValueError as e:
     logger.warning(f"API client not initialized: {e}")
     client = None
@@ -81,7 +76,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     if client is None:
         return {
             "html": '<div class="clearmind-chunk">Error: No API key configured. '
-                    'Set ANTHROPIC_API_KEY in your environment.</div>',
+                    'Set OPENROUTER_API_KEY in your environment.</div>',
             "readability": None,
             "drift": None,
             "raw": "",

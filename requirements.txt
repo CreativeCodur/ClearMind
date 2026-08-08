@@ -3,4 +3,3 @@ flask-cors==5.0.1
 requests==2.32.3
 markdown==3.4.4
 pysbd==0.3.4
-anthropic>=0.120.0
