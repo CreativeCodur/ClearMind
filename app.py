@@ -25,6 +25,7 @@ import html as html_lib
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
+import re as re_module
 import config
 from prompts import get_system_prompt
 from readability import (
@@ -33,7 +34,6 @@ from readability import (
     needs_simplification,
     get_readability_summary,
 )
-from refocus import DriftDetector
 from formatter import format_response, strip_format_markers, to_html
 from gpt_client import GPTClient
 
@@ -52,9 +52,6 @@ try:
 except ValueError as e:
     logger.warning(f"API client not initialized: {e}")
     client = None
-
-# Per-session drift detectors (keyed by session ID)
-drift_detectors = {}
 
 # Per-session conversation history
 conversations = {}
@@ -139,30 +136,21 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
         f"pass={'YES' if report.passes_overall else 'NO (best effort)'}"
     )
 
-    # --- Step 5: Topic drift detection (ADHD and combined only) ---
+    # --- Step 5: Extract LLM-based drift notice (ADHD and combined only) ---
     drift_info = None
     if mode in ("adhd", "combined"):
-        if session_id not in drift_detectors:
-            drift_detectors[session_id] = DriftDetector()
-
-        detector = drift_detectors[session_id]
-        detector.add_message(user_message)
-        drift_result = detector.check_drift()
-
-        if drift_result.is_drifting:
+        drift_match = re_module.search(
+            r'\[DRIFT\](.*?)\[/DRIFT\]', current_text, re_module.DOTALL
+        )
+        if drift_match:
+            drift_message = drift_match.group(1).strip()
+            current_text = current_text[:drift_match.start()] + current_text[drift_match.end():]
+            current_text = current_text.strip()
             drift_info = {
                 "is_drifting": True,
-                "similarity": drift_result.similarity,
-                "message": drift_result.refocus_message,
+                "message": drift_message,
             }
-            logger.info(
-                f"[{session_id}] Drift detected (sim={drift_result.similarity})"
-            )
-        else:
-            drift_info = {
-                "is_drifting": False,
-                "similarity": drift_result.similarity,
-            }
+            logger.info(f"[{session_id}] LLM drift detected: {drift_message[:60]}")
 
     # --- Step 6: Format response ---
     formatted = format_response(current_text, mode)
@@ -172,7 +160,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     if drift_info and drift_info.get("is_drifting"):
         drift_html = (
             f'<div class="clearmind-drift-notice">'
-            f'{drift_info["message"]}'
+            f'{html_lib.escape(drift_info["message"])}'
             f'</div>'
         )
         html = drift_html + html
@@ -260,7 +248,6 @@ def reset_session():
         return jsonify({"error": "'session_id' must be a string of 200 characters or less"}), 400
 
     conversations.pop(session_id, None)
-    drift_detectors.pop(session_id, None)
 
     return jsonify({"status": "reset", "session_id": session_id})
 
