@@ -139,9 +139,16 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     # --- Step 5: Extract LLM-based drift notice (ADHD and combined only) ---
     drift_info = None
     if mode in ("adhd", "combined"):
+        # Try exact [DRIFT]...[/DRIFT] tags first
         drift_match = re_module.search(
             r'\[DRIFT\](.*?)\[/DRIFT\]', current_text, re_module.DOTALL
         )
+        if not drift_match:
+            # Fallback: model may output tags without brackets or with variations
+            drift_match = re_module.search(
+                r'(?:^|\n)\s*\[?DRIFT\]?\s*[:.]?\s*(.*?)\s*\[?/DRIFT\]?\s*(?:\n|$)',
+                current_text, re_module.DOTALL | re_module.IGNORECASE
+            )
         if drift_match:
             drift_message = drift_match.group(1).strip()
             current_text = current_text[:drift_match.start()] + current_text[drift_match.end():]

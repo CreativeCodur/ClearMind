@@ -663,6 +663,24 @@
             margin-bottom: 0;
         }
 
+        .message.ai ul, .message.ai ol {
+            padding-left: 20px;
+        }
+        .message.ai li {
+            list-style: none;
+            position: relative;
+            padding-left: 8px;
+            margin-bottom: 4px;
+        }
+        .message.ai li::before {
+            content: '●';
+            color: var(--accent);
+            position: absolute;
+            left: -14px;
+            font-size: 0.7em;
+            top: 0.25em;
+        }
+
         /* ─── Collapsible sections (U7) ─── */
         /* Research basis: Malhotra (2026) benchmarking study found ALL 5
            major chatbots scored 1/5 on collapsible responses. ClearMind
