@@ -51,13 +51,13 @@
             --accent: #5b8a72;
             --accent-light: #7aac95;
             --accent-faint: rgba(91, 138, 114, 0.08);
-            --user-bubble: #e8f0ec;
-            --user-bubble-border: #c8ddd1;
-            --ai-bubble: #ffffff;
-            --ai-bubble-border: #e5e2dc;
-            --tldr-bg: #eef6f1;
+            --user-bubble: #b6d4c2;
+            --user-bubble-border: transparent;
+            --ai-bubble: #e8f0eb;
+            --ai-bubble-border: transparent;
+            --tldr-bg: #a8cfb8;
             --tldr-border: #5b8a72;
-            --drift-bg: #fef9ef;
+            --drift-bg: #e8d99b;
             --drift-border: #c9a84c;
             --chunk-border: rgba(0, 0, 0, 0.04);
             --input-bg: #ffffff;
@@ -551,15 +551,15 @@
 
         .message.user {
             background: var(--user-bubble);
-            border: 1px solid var(--user-bubble-border);
+            border: none;
             align-self: flex-end;
             border-bottom-right-radius: 6px;
-            color: var(--text);
+            color: #1a1a1a;
         }
 
         .message.ai {
             background: var(--ai-bubble);
-            border: 1px solid var(--ai-bubble-border);
+            border: none;
             align-self: flex-start;
             border-bottom-left-radius: 6px;
             box-shadow: var(--shadow-sm);
@@ -607,10 +607,11 @@
             border-radius: 4px 8px 8px 4px;
             margin-bottom: 14px;
             font-size: 0.9rem;
+            color: #1a1a1a;
         }
 
         .clearmind-tldr strong {
-            color: var(--tldr-border);
+            color: #2d5a42;
             font-weight: 600;
         }
 
@@ -706,7 +707,7 @@
             border-radius: 4px 8px 8px 4px;
             margin-bottom: 14px;
             font-size: 0.85rem;
-            color: #7a6c3d;
+            color: #3d3520;
             font-style: italic;
         }
 
@@ -716,7 +717,7 @@
             align-self: flex-start;
             padding: 16px 20px;
             background: var(--ai-bubble);
-            border: 1px solid var(--ai-bubble-border);
+            border: none;
             border-radius: var(--radius);
             border-bottom-left-radius: 6px;
             box-shadow: var(--shadow-sm);
@@ -753,15 +754,14 @@
             gap: 10px;
             align-items: flex-end;
             background: var(--input-bg);
-            border: 1px solid var(--input-border);
+            border: none;
             border-radius: var(--radius);
             padding: 6px 6px 6px 16px;
-            box-shadow: var(--shadow-md);
-            transition: border-color var(--transition), box-shadow var(--transition);
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow var(--transition);
         }
 
         .input-row:focus-within {
-            border-color: var(--accent-light);
             box-shadow: 0 2px 12px rgba(91, 138, 114, 0.1);
         }
 
@@ -791,9 +791,9 @@
         }
 
         .send-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             background: var(--accent);
             border: none;
             cursor: pointer;
@@ -811,7 +811,6 @@
         .send-btn svg {
             width: 18px;
             height: 18px;
-            fill: #fff;
         }
 
 
@@ -843,6 +842,31 @@
             flex-shrink: 0;
         }
 
+        .dyslexia-toggle {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .dyslexia-toggle:hover {
+            color: var(--accent);
+            background: var(--accent-faint);
+        }
+        .dyslexia-toggle.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        body.mode-adhd .dyslexia-toggle {
+            display: flex;
+        }
+
         /* ─── Mode-specific overrides ─── */
 
         /* Dyslexia & Combined: OpenDyslexic, spacing, larger text */
@@ -867,6 +891,24 @@
 
         body.mode-dyslexia .input-area textarea,
         body.mode-combined .input-area textarea {
+            font-size: 1.05rem;
+            letter-spacing: 0.12em;
+        }
+
+        /* ADHD mode with dyslexic font toggle */
+        body.mode-adhd.dyslexia-font-on {
+            font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif;
+            letter-spacing: 0.12em;
+            word-spacing: 0.2em;
+        }
+        body.mode-adhd.dyslexia-font-on * {
+            font-family: inherit;
+        }
+        body.mode-adhd.dyslexia-font-on .message {
+            font-size: 1.05rem;
+            line-height: 2.0;
+        }
+        body.mode-adhd.dyslexia-font-on .input-area textarea {
             font-size: 1.05rem;
             letter-spacing: 0.12em;
         }
@@ -1023,6 +1065,9 @@
                     </span>
                     <span id="readabilityPasses"></span>
                 </div>
+                <button class="dyslexia-toggle" id="dyslexiaToggle" title="Toggle dyslexic-friendly font">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                </button>
                 <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
             </div>
         </div>
@@ -1054,7 +1099,7 @@
                     aria-label="Message input"
                 ></textarea>
                 <button class="send-btn" id="sendBtn" aria-label="Send message">
-                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                 </button>
             </div>
 
@@ -1108,7 +1153,17 @@
                 btn.classList.add('active');
                 currentMode = btn.dataset.mode;
                 document.body.className = 'mode-' + currentMode;
+                if (dyslexiaToggle.classList.contains('active')) {
+                    document.body.classList.add('dyslexia-font-on');
+                }
             });
+        });
+
+        // Dyslexic font toggle (ADHD mode only)
+        const dyslexiaToggle = document.getElementById('dyslexiaToggle');
+        dyslexiaToggle.addEventListener('click', () => {
+            dyslexiaToggle.classList.toggle('active');
+            document.body.classList.toggle('dyslexia-font-on');
         });
 
         let currentConvId = null;
