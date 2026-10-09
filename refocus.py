@@ -53,6 +53,15 @@ TOPIC_STOPWORDS = {
     'hi', 'hey', 'hello', 'sup', 'yo', 'hiya', 'howdy', 'greetings',
     'thanks', 'thank', 'okay', 'ok', 'yes', 'yeah', 'yep', 'nope',
     'bye', 'goodbye', 'sure', 'cool', 'nice', 'great', 'awesome',
+    'now', 'then', 'here', 'there', 'well', 'very', 'much', 'more',
+    'some', 'any', 'all', 'each', 'every', 'other', 'most', 'own',
+    'same', 'still', 'even', 'too', 'way', 'long', 'new', 'old',
+    'big', 'small', 'good', 'bad', 'best', 'first', 'last', 'next',
+    'right', 'left', 'able', 'been', 'only', 'into', 'over', 'such',
+    'actually', 'basically', 'literally', 'maybe', 'probably',
+    'explain', 'describe', 'brief', 'briefly', 'detail', 'mean',
+    'means', 'show', 'find', 'work', 'works', 'call', 'called',
+    'name', 'named', 'kind', 'type', 'sort', 'lots', 'many', 'few',
 }
 
 
@@ -120,7 +129,7 @@ def most_significant_keyword(tokens: List[str], idf: Dict[str, float]) -> Option
     """
     candidates = [
         token for token in tokens
-        if len(token) > 2 and token not in TOPIC_STOPWORDS
+        if len(token) > 3 and token not in TOPIC_STOPWORDS
     ]
     if not candidates:
         return None
@@ -179,7 +188,7 @@ class DriftDetector:
         for doc in window_docs:
             window_combined.extend(doc)
 
-        if not window_combined or len(window_combined) < 2:
+        if not window_combined:
             return DriftResult(is_drifting=False, similarity=1.0)
 
         # Compute IDF across both documents
