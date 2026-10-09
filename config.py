@@ -14,7 +14,7 @@ MODEL = "openai/gpt-oss-20b"
 FALLBACK_MODELS = []
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-MAX_TOKENS = 4096
+MAX_TOKENS = 1024
 TEMPERATURE = 0.7
 
 # ─── Modes ──────────────────────────────────────────────────────────────────────
