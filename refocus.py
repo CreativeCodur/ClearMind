@@ -212,32 +212,27 @@ class DriftDetector:
             # a list of raw TF-IDF words.
             topic_hint = most_significant_keyword(window_combined, idf)
             if topic_hint is None:
-                topic_hint = "that earlier topic"
-
-            # Warm, supportive messages — never clinical or passive-aggressive.
-            # Per Giri et al. (2026): neurodivergent users experience
-            # rejection sensitive dysphoria; blunt phrasing feels like
-            # judgment. Per Barkley (2015) [7]: topic-switching is a
-            # natural ADHD behavior, not a mistake to correct.
-            import random
-            gentle_msgs = [
-                (
-                    f"No worries at all — just a heads-up that you were "
-                    f"exploring {topic_hint} earlier. Want to come back to "
-                    f"that, or keep going with this? Either is fine!"
-                ),
-                (
-                    f"Hey, totally okay to switch gears! For reference, "
-                    f"you were looking into {topic_hint} before. "
-                    f"Happy to help with whatever you need right now."
-                ),
-                (
-                    f"Quick friendly note: your earlier thread was about "
-                    f"{topic_hint}. No pressure to go back — just "
-                    f"bookmarking it so you don't lose it."
-                ),
-            ]
-            refocus_msg = random.choice(gentle_msgs)
+                is_drifting = False
+            else:
+                import random
+                gentle_msgs = [
+                    (
+                        f"No worries at all — just a heads-up that you were "
+                        f"exploring {topic_hint} earlier. Want to come back to "
+                        f"that, or keep going with this? Either is fine!"
+                    ),
+                    (
+                        f"Hey, totally okay to switch gears! For reference, "
+                        f"you were looking into {topic_hint} before. "
+                        f"Happy to help with whatever you need right now."
+                    ),
+                    (
+                        f"Quick friendly note: your earlier thread was about "
+                        f"{topic_hint}. No pressure to go back — just "
+                        f"bookmarking it so you don't lose it."
+                    ),
+                ]
+                refocus_msg = random.choice(gentle_msgs)
 
         return DriftResult(
             is_drifting=is_drifting,
