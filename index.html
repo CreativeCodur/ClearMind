@@ -70,38 +70,6 @@
             --transition: 180ms ease;
         }
 
-        body.dark {
-            --bg: #1a1b1e;
-            --bg-secondary: #25272b;
-            --bg-chat: #1e1f23;
-            --text: #d8d8d8;
-            --text-secondary: #9a9a9a;
-            --accent: #6fa88a;
-            --accent-light: #88bfa0;
-            --accent-faint: rgba(111, 168, 138, 0.1);
-            --user-bubble: #2a3530;
-            --user-bubble-border: #3a4d42;
-            --ai-bubble: #24262a;
-            --ai-bubble-border: #35373c;
-            --tldr-bg: #1f2d25;
-            --tldr-border: #6fa88a;
-            --drift-bg: #2a2820;
-            --drift-border: #b8a44a;
-            --chunk-border: rgba(255, 255, 255, 0.05);
-            --input-bg: #24262a;
-            --input-border: #3a3c40;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-            --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        body.dark .bg-pattern svg { opacity: 0.12; }
-        body.dark .mode-btn:hover { background: rgba(255, 255, 255, 0.08); }
-        body.dark .mode-btn.active { background: var(--bg-secondary); box-shadow: none; }
-        body.dark .history-panel { background: rgba(30, 31, 35, 0.9); }
-        body.dark .readability-tooltip { background: #2a2c30; border-color: #3a3c40; }
-        body.dark .clearmind-drift-notice { color: #c4b870; }
-        body.dark .clearmind-collapse-toggle { background: var(--bg-secondary); border-color: var(--input-border); }
-        body.dark .logo img { filter: none; }
 
         html, body {
             height: 100%;
@@ -866,27 +834,7 @@
             color: var(--accent);
         }
 
-        .theme-toggle {
-            background: none;
-            border: 1px solid var(--input-border);
-            border-radius: 8px;
-            padding: 5px 10px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: all var(--transition);
-            flex-shrink: 0;
-            line-height: 1;
-        }
 
-        body.dark .theme-toggle {
-            color: #d4c87a;
-        }
-
-        .theme-toggle:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
 
         .header-right {
             display: flex;
@@ -1075,7 +1023,6 @@
                     </span>
                     <span id="readabilityPasses"></span>
                 </div>
-                <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">&#9790;</button>
                 <button class="new-chat-btn" id="newChatBtn" title="Start a new conversation">New chat</button>
             </div>
         </div>
@@ -1154,27 +1101,13 @@
             'like', 'really', 'also', 'get', 'got', 'make', 'tell', 'give'
         ]);
 
-        // Dark mode
-        const themeToggle = document.getElementById('themeToggle');
-        if (localStorage.getItem('clearmind-dark') === '1') {
-            document.body.classList.add('dark');
-            themeToggle.innerHTML = '&#9788;';
-        }
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark');
-            themeToggle.innerHTML = isDark ? '&#9788;' : '&#9790;';
-            localStorage.setItem('clearmind-dark', isDark ? '1' : '0');
-        });
-
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentMode = btn.dataset.mode;
-                const isDark = document.body.classList.contains('dark');
                 document.body.className = 'mode-' + currentMode;
-                if (isDark) document.body.classList.add('dark');
             });
         });
 
