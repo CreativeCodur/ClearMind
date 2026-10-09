@@ -50,6 +50,9 @@ TOPIC_STOPWORDS = {
     'talk', 'know', 'think', 'say', 'said', 'thing', 'things', 'gonna',
     'wanna', 'something', 'anything', 'everything', 'nothing', 'let',
     'go', 'going', 'come', 'take', 'look', 'see', 'keep', 'put', 'use',
+    'hi', 'hey', 'hello', 'sup', 'yo', 'hiya', 'howdy', 'greetings',
+    'thanks', 'thank', 'okay', 'ok', 'yes', 'yeah', 'yep', 'nope',
+    'bye', 'goodbye', 'sure', 'cool', 'nice', 'great', 'awesome',
 }
 
 
@@ -176,7 +179,7 @@ class DriftDetector:
         for doc in window_docs:
             window_combined.extend(doc)
 
-        if not window_combined:
+        if not window_combined or len(window_combined) < 2:
             return DriftResult(is_drifting=False, similarity=1.0)
 
         # Compute IDF across both documents
