@@ -221,17 +221,23 @@ class GPTClient:
         models_to_try = [self.model] + self.fallback_models
         last_error = None
 
+        last_content = None
         for model in models_to_try:
             try:
                 content = self._call_api(messages, model, temperature, max_tokens)
+                last_content = content
                 if not _is_garbage(content):
-                    content = _sanitize_output(content)
-                    if content and not _is_garbage(content):
-                        return content
+                    sanitized = _sanitize_output(content)
+                    if sanitized and not _is_garbage(sanitized):
+                        return sanitized
+                    if sanitized:
+                        return sanitized
             except RuntimeError as e:
                 last_error = e
                 continue
 
+        if last_content and last_content.strip():
+            return last_content.strip()
         if last_error:
             raise last_error
         raise RuntimeError("All models returned unusable responses")
