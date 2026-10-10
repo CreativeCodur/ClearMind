@@ -31,7 +31,7 @@ REPETITION_THRESHOLD = 0.3
 
 def _is_garbage(text: str) -> bool:
     stripped = text.strip().lower()
-    if len(stripped.split()) < 4:
+    if len(stripped.split()) < 2:
         return True
     return any(stripped.startswith(p) for p in GARBAGE_PATTERNS)
 
