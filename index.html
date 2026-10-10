@@ -1515,6 +1515,22 @@
             div.className = 'message ' + role;
             div.innerHTML = html;
             chatContainer.insertBefore(div, loading);
+
+            // Reattach collapsible toggle listeners (lost during save/restore)
+            const toggle = div.querySelector('.clearmind-collapse-toggle');
+            const wrapper = div.querySelector('.clearmind-collapsible');
+            if (toggle && wrapper) {
+                toggle.addEventListener('click', () => {
+                    const expanded = wrapper.classList.toggle('expanded');
+                    toggle.classList.toggle('expanded');
+                    const chunks = wrapper.querySelectorAll('.clearmind-chunk');
+                    toggle.innerHTML = expanded
+                        ? '<span class="arrow">&#9654;</span> Hide extra sections'
+                        : '<span class="arrow">&#9654;</span> Show ' + chunks.length + ' more section' + (chunks.length > 1 ? 's' : '');
+                    scrollToBottom();
+                });
+            }
+
             return div;
         }
 
