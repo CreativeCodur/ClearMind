@@ -25,7 +25,7 @@ import markdown
 from readability import split_sentences
 
 
-def format_response(text: str, mode: str) -> str:
+def format_response(text: str, mode: str, skip_tldr: bool = False) -> str:
     """Apply mode-specific formatting to an AI response.
 
     Pipeline:
@@ -41,9 +41,13 @@ def format_response(text: str, mode: str) -> str:
         Formatted text with structural markers.
     """
     # Step 1: Handle TL;DR
-    tldr, body = extract_tldr(text)
+    if skip_tldr:
+        tldr = None
+        body = re.sub(r'^(?:TL;?DR|TLDR)\s*[:\-]?\s*', '', text.strip(), flags=re.IGNORECASE).strip()
+    else:
+        tldr, body = extract_tldr(text)
 
-    if config.TLDR_ENABLED.get(mode, False) and not tldr:
+    if not skip_tldr and config.TLDR_ENABLED.get(mode, False) and not tldr:
         # Generate a TL;DR from the first sentence
         sentences = split_sentences(body)
         if sentences:

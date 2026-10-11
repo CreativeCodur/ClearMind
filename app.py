@@ -136,18 +136,19 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
         f"pass={'YES' if report.passes_overall else 'NO (best effort)'}"
     )
 
-    # --- Step 4b: Strip TL;DR from pure greeting responses ---
+    # --- Step 4b: Detect pure greeting messages ---
     greeting_words = {"hi", "hello", "hey", "yo", "sup", "hiya", "howdy", "hola", "greetings"}
+    filler_words = {"there", "everyone", "all", "guys", "clearmind", "friend", "friends"}
     user_stripped = re_module.sub(r'[^\w\s]', '', user_message.strip().lower())
-    if user_stripped.split()[0] in greeting_words if user_stripped.split() else False:
-        words = user_stripped.split()
-        is_greeting_only = len(words) <= 3 and all(
-            w in greeting_words | {"there", "everyone", "all", "guys", "clearmind"} for w in words
-        )
-        if is_greeting_only:
-            current_text = re_module.sub(
-                r'(?i)^TL;?DR:?\s*', '', current_text
-            ).strip()
+    user_words = user_stripped.split()
+    is_greeting = (
+        len(user_words) > 0
+        and user_words[0] in greeting_words
+        and len(user_words) <= 3
+        and all(w in greeting_words | filler_words for w in user_words)
+    )
+    if is_greeting:
+        current_text = re_module.sub(r'(?i)^TL;?DR:?\s*', '', current_text).strip()
 
     # --- Step 5: Extract LLM-based drift notice (ADHD and combined only) ---
     drift_info = None
@@ -173,7 +174,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
             logger.info(f"[{session_id}] LLM drift detected: {drift_message[:60]}")
 
     # --- Step 6: Format response ---
-    formatted = format_response(current_text, mode)
+    formatted = format_response(current_text, mode, skip_tldr=is_greeting)
     html = to_html(formatted, mode)
 
     # Prepend drift notice if detected
