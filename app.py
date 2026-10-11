@@ -91,7 +91,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
         raw_response = client.generate(
             user_message=user_message,
             system_prompt=system_prompt,
-            conversation_history=history[-3:],
+            conversation_history=history[-1:],
         )
     except RuntimeError as e:
         error_str = str(e)
