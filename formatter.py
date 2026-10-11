@@ -223,8 +223,11 @@ def to_html(formatted_text: str, mode: str) -> str:
             f'</div>'
         )
 
-    # If no markers found, return as plain paragraph
+    # If no markers found or all chunks empty, handle gracefully
     if not html_parts:
-        return f'<div class="clearmind-chunk">{html.escape(formatted_text)}</div>'
+        plain = strip_format_markers(formatted_text).strip()
+        if not plain:
+            return ''
+        return f'<div class="clearmind-chunk">{html.escape(plain)}</div>'
 
     return '\n'.join(html_parts)
