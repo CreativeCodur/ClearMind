@@ -85,13 +85,20 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
     # --- Step 2: Get conversation history ---
     history = conversations.get(session_id, [])
 
-    # --- Step 3: Call API ---
+    # Inject previous topic into system prompt for drift detection (no full history)
+    if mode in ("adhd", "combined") and history:
+        last_user_msgs = [m["text"] for m in history if m["role"] == "user"]
+        if last_user_msgs:
+            prev_topic = last_user_msgs[-1][:80]
+            system_prompt += f"\nThe user's previous question was: \"{prev_topic}\""
+
+    # --- Step 3: Call API (no conversation history to save context) ---
     logger.info(f"[{session_id}] Mode={mode}, sending to API...")
     try:
         raw_response = client.generate(
             user_message=user_message,
             system_prompt=system_prompt,
-            conversation_history=history[-1:],
+            conversation_history=None,
         )
     except RuntimeError as e:
         error_str = str(e)
