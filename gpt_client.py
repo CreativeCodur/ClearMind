@@ -190,7 +190,8 @@ class GPTClient:
         try:
             content = data["choices"][0]["message"]["content"]
             if not content or not content.strip():
-                raise RuntimeError("Empty response from model")
+                finish = data["choices"][0].get("finish_reason", "unknown")
+                raise RuntimeError(f"Empty response from model (finish_reason={finish})")
             return content
         except (KeyError, IndexError) as e:
             raise RuntimeError(
