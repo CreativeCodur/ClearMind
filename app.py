@@ -173,12 +173,18 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
             }
             logger.info(f"[{session_id}] LLM drift detected: {drift_message[:60]}")
 
-    # If drift stripping left the response empty, re-ask without history
+    # If drift stripping left the response empty, re-ask without history or drift rules
     if drift_info and not current_text.strip():
+        simple_prompt = re_module.sub(
+            r'- TOPIC DRIFT:.*?\n', '', system_prompt, flags=re_module.DOTALL
+        )
+        simple_prompt = re_module.sub(
+            r'\[DRIFT\].*?\[/DRIFT\]\n?', '', simple_prompt, flags=re_module.DOTALL
+        )
         try:
             current_text = client.generate(
                 user_message=user_message,
-                system_prompt=system_prompt,
+                system_prompt=simple_prompt,
                 conversation_history=None,
                 max_tokens=config.MAX_TOKENS,
             )
@@ -186,7 +192,7 @@ def process_message(user_message: str, mode: str, session_id: str) -> dict:
                 r'\[DRIFT\].*?\[/DRIFT\]', '', current_text, flags=re_module.DOTALL
             ).strip()
         except RuntimeError:
-            current_text = "I noticed you changed topics! What would you like to know?"
+            current_text = "Sure! What would you like to know about that?"
 
     # --- Step 6: Format response ---
     formatted = format_response(current_text, mode, skip_tldr=is_greeting)
